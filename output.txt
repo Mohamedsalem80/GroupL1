@@ -1,0 +1,1524 @@
+gomine@DESKTOP-U3KFGAU:~/projects/custom-regularizer$ poetry run python -m custom_regularizer.main | tee output.log
+2025-12-13 12:22:29.218644: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation
+ orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2025-12-13 12:22:29.266156: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2025-12-13 12:22:29.112311: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation
+ orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1765621353.681409   39649 gpu_device.cc:2020] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 3582 MB memory:  -> device: 0, name: NVIDIA GeForce RTX 3060 Laptop GPU, pci bus id: 000
+0:01:00.0, compute capability: 8.6
+======================================================================
+Group Sparsity Regularizer - CIFAR-10 Experiment
+======================================================================
+
+Loading CIFAR-10 dataset...
+Training samples: 50000
+Test samples: 10000
+Image shape: (32, 32, 3)
+
+Building models...
+  - Baseline model (no regularization)
+  - L1 regularized model
+  - L2 regularized model
+  - Group L1 regularized model
+
+Model Architecture:
+Model: "resnet18"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ Layer (type)                    ┃ Output Shape           ┃       Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
+│ input_layer (InputLayer)        │ (None, 32, 32, 3)      │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ conv2d (Conv2D)                 │ (None, 32, 32, 64)     │         1,728 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ batch_normalization             │ (None, 32, 32, 64)     │           256 │
+│ (BatchNormalization)            │                        │               │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ activation (Activation)         │ (None, 32, 32, 64)     │             0 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ block1_1 (ResidualBlock)        │ (None, 32, 32, 64)     │        74,240 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ block1_2 (ResidualBlock)        │ (None, 32, 32, 64)     │        74,240 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ block2_1 (ResidualBlock)        │ (None, 16, 16, 128)    │       230,912 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ block2_2 (ResidualBlock)        │ (None, 16, 16, 128)    │       295,936 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ block3_1 (ResidualBlock)        │ (None, 8, 8, 256)      │       920,576 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ block3_2 (ResidualBlock)        │ (None, 8, 8, 256)      │     1,181,696 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ block4_1 (ResidualBlock)        │ (None, 4, 4, 512)      │     3,676,160 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ block4_2 (ResidualBlock)        │ (None, 4, 4, 512)      │     4,722,688 │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ global_average_pooling2d        │ (None, 512)            │             0 │
+│ (GlobalAveragePooling2D)        │                        │               │
+├─────────────────────────────────┼────────────────────────┼───────────────┤
+│ dense (Dense)                   │ (None, 10)             │         5,130 │
+└─────────────────────────────────┴────────────────────────┴───────────────┘
+ Total params: 11,183,562 (42.66 MB)
+ Trainable params: 11,173,962 (42.63 MB)
+ Non-trainable params: 9,600 (37.50 KB)
+2025-12-13 12:22:38.533855: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:103] Profiler session initializing.
+2025-12-13 12:22:38.533902: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:118] Profiler session started.
+I0000 00:00:1765621358.533917   39649 cupti_tracer.cc:1082] Profiler found 1 GPUs
+2025-12-13 12:22:38.556564: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:136] Profiler session tear down.
+I0000 00:00:1765621358.556762   39649 cupti_tracer.cc:1381] CUPTI activity buffer flushed
+
+======================================================================
+TRAINING PHASE
+======================================================================
+Num GPUs Available:  1
+======================================================================
+TensorBoard logs will be saved to: /home/gomine/projects/custom-regularizer/logs/baseline_20251213-122238
+
+Training baseline...
+======================================================================
+Epoch 1/100
+2025-12-13 12:22:38.954717: E tensorflow/core/util/util.cc:131] oneDNN supports DT_HALF only on platforms with AVX-512. Falling back to the default Eigen-based implementation if present.
+2025-12-13 12:22:47.137728: I external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:473] Loaded cuDNN version 91600
+ 9/98 ━━━━━━━━━━━━━━━━━━━━ 1:21 914ms/step - accuracy: 0.1601 - loss: 3.12842025-12-13 12:22:57.144324: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:103] Profiler session initializing.
+2025-12-13 12:22:57.144360: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:118] Profiler session started.
+19/98 ━━━━━━━━━━━━━━━━━━━━ 1:09 875ms/step - accuracy: 0.2031 - loss: 2.79402025-12-13 12:23:06.610934: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:68] Profiler session collecting data.
+I0000 00:00:1765621387.143537   39649 cupti_tracer.cc:1381] CUPTI activity buffer flushed
+I0000 00:00:1765621388.671136   39649 cupti_collector.cc:841]  GpuTracer has collected 99212 callback api events and 99969 activity events.
+I0000 00:00:1765621388.671208   39649 cupti_collector.cc:844]  GpuTracer max callback_events: 2097152, max activity events: 2097152
+2025-12-13 12:23:10.251139: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:136] Profiler session tear down.
+2025-12-13 12:23:10.252424: I external/local_xla/xla/tsl/profiler/rpc/client/save_profile.cc:150] Collecting XSpace to repository: /home/gomine/projects/custom-regularizer/logs/baseline_20251213-122238/train/plu
+gins/profile/2025_12_13_12_23_10/DESKTOP-U3KFGAU.xplane.pb
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 931ms/step - accuracy: 0.3391 - loss: 2.0276
+Epoch 1: val_accuracy improved from None to 0.13650, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 110s 1s/step - accuracy: 0.4287 - loss: 1.6251 - val_accuracy: 0.1365 - val_loss: 3.0412 - learning_rate: 0.0010
+Epoch 2/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 888ms/step - accuracy: 0.5661 - loss: 1.2049
+Epoch 2: val_accuracy improved from 0.13650 to 0.15270, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 957ms/step - accuracy: 0.5889 - loss: 1.1442 - val_accuracy: 0.1527 - val_loss: 3.3482 - learning_rate: 0.0010
+Epoch 3/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 883ms/step - accuracy: 0.6558 - loss: 0.9698
+Epoch 3: val_accuracy improved from 0.15270 to 0.32190, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 938ms/step - accuracy: 0.6707 - loss: 0.9297 - val_accuracy: 0.3219 - val_loss: 2.4004 - learning_rate: 0.0010
+Epoch 4/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 861ms/step - accuracy: 0.7204 - loss: 0.7857
+Epoch 4: val_accuracy improved from 0.32190 to 0.53900, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 914ms/step - accuracy: 0.7307 - loss: 0.7641 - val_accuracy: 0.5390 - val_loss: 1.4173 - learning_rate: 0.0010
+Epoch 5/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 863ms/step - accuracy: 0.7621 - loss: 0.6792
+Epoch 5: val_accuracy improved from 0.53900 to 0.72050, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 922ms/step - accuracy: 0.7668 - loss: 0.6643 - val_accuracy: 0.7205 - val_loss: 0.8529 - learning_rate: 0.0010
+Epoch 6/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 881ms/step - accuracy: 0.7883 - loss: 0.6108
+Epoch 6: val_accuracy did not improve from 0.72050
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 939ms/step - accuracy: 0.7920 - loss: 0.5977 - val_accuracy: 0.7079 - val_loss: 0.9035 - learning_rate: 0.0010
+Epoch 7/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 862ms/step - accuracy: 0.8104 - loss: 0.5432
+Epoch 7: val_accuracy improved from 0.72050 to 0.76880, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 916ms/step - accuracy: 0.8143 - loss: 0.5348 - val_accuracy: 0.7688 - val_loss: 0.6835 - learning_rate: 0.0010
+Epoch 8/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 896ms/step - accuracy: 0.8230 - loss: 0.5018
+Epoch 8: val_accuracy did not improve from 0.76880
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 946ms/step - accuracy: 0.8263 - loss: 0.4978 - val_accuracy: 0.7219 - val_loss: 0.9088 - learning_rate: 0.0010
+Epoch 9/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 849ms/step - accuracy: 0.8416 - loss: 0.4537
+Epoch 9: val_accuracy did not improve from 0.76880
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 895ms/step - accuracy: 0.8403 - loss: 0.4587 - val_accuracy: 0.5236 - val_loss: 2.0537 - learning_rate: 0.0010
+Epoch 10/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 859ms/step - accuracy: 0.8524 - loss: 0.4208
+Epoch 10: val_accuracy did not improve from 0.76880
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 913ms/step - accuracy: 0.8541 - loss: 0.4178 - val_accuracy: 0.7223 - val_loss: 0.9471 - learning_rate: 0.0010
+Epoch 11/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 855ms/step - accuracy: 0.8639 - loss: 0.3930
+Epoch 11: val_accuracy improved from 0.76880 to 0.78500, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 896ms/step - accuracy: 0.8623 - loss: 0.3954 - val_accuracy: 0.7850 - val_loss: 0.6807 - learning_rate: 0.0010
+Epoch 12/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 886ms/step - accuracy: 0.8689 - loss: 0.3757
+Epoch 12: val_accuracy did not improve from 0.78500
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 915ms/step - accuracy: 0.8708 - loss: 0.3724 - val_accuracy: 0.6888 - val_loss: 1.2134 - learning_rate: 0.0010
+Epoch 13/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 897ms/step - accuracy: 0.8784 - loss: 0.3497
+Epoch 13: val_accuracy did not improve from 0.78500
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 947ms/step - accuracy: 0.8778 - loss: 0.3493 - val_accuracy: 0.7462 - val_loss: 0.8388 - learning_rate: 0.0010
+Epoch 14/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 840ms/step - accuracy: 0.8867 - loss: 0.3223
+Epoch 14: val_accuracy did not improve from 0.78500
+98/98 ━━━━━━━━━━━━━━━━━━━━ 87s 887ms/step - accuracy: 0.8839 - loss: 0.3308 - val_accuracy: 0.7760 - val_loss: 0.7146 - learning_rate: 0.0010
+Epoch 15/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 870ms/step - accuracy: 0.8928 - loss: 0.3046
+Epoch 15: val_accuracy did not improve from 0.78500
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 916ms/step - accuracy: 0.8909 - loss: 0.3129 - val_accuracy: 0.7260 - val_loss: 1.0294 - learning_rate: 0.0010
+Epoch 16/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 872ms/step - accuracy: 0.8997 - loss: 0.2895
+Epoch 16: val_accuracy did not improve from 0.78500
+
+Epoch 16: ReduceLROnPlateau reducing learning rate to 0.0005000000237487257.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 917ms/step - accuracy: 0.8965 - loss: 0.2948 - val_accuracy: 0.7624 - val_loss: 0.8549 - learning_rate: 0.0010
+Epoch 17/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 891ms/step - accuracy: 0.9157 - loss: 0.2399
+Epoch 17: val_accuracy improved from 0.78500 to 0.85550, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 952ms/step - accuracy: 0.9198 - loss: 0.2274 - val_accuracy: 0.8555 - val_loss: 0.4579 - learning_rate: 5.0000e-04
+Epoch 18/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 880ms/step - accuracy: 0.9268 - loss: 0.2105
+Epoch 18: val_accuracy did not improve from 0.85550
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 929ms/step - accuracy: 0.9278 - loss: 0.2076 - val_accuracy: 0.8517 - val_loss: 0.4869 - learning_rate: 5.0000e-04
+Epoch 19/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 851ms/step - accuracy: 0.9285 - loss: 0.2005
+Epoch 19: val_accuracy improved from 0.85550 to 0.87660, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 906ms/step - accuracy: 0.9305 - loss: 0.1977 - val_accuracy: 0.8766 - val_loss: 0.3940 - learning_rate: 5.0000e-04
+Epoch 20/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 878ms/step - accuracy: 0.9328 - loss: 0.1891
+Epoch 20: val_accuracy did not improve from 0.87660
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 925ms/step - accuracy: 0.9324 - loss: 0.1898 - val_accuracy: 0.8664 - val_loss: 0.4316 - learning_rate: 5.0000e-04
+Epoch 21/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 855ms/step - accuracy: 0.9363 - loss: 0.1807
+Epoch 21: val_accuracy did not improve from 0.87660
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 902ms/step - accuracy: 0.9352 - loss: 0.1824 - val_accuracy: 0.8308 - val_loss: 0.5945 - learning_rate: 5.0000e-04
+Epoch 22/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 869ms/step - accuracy: 0.9376 - loss: 0.1731
+Epoch 22: val_accuracy did not improve from 0.87660
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 916ms/step - accuracy: 0.9378 - loss: 0.1751 - val_accuracy: 0.8533 - val_loss: 0.5057 - learning_rate: 5.0000e-04
+Epoch 23/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 878ms/step - accuracy: 0.9433 - loss: 0.1631
+Epoch 23: val_accuracy did not improve from 0.87660
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 925ms/step - accuracy: 0.9415 - loss: 0.1686 - val_accuracy: 0.8518 - val_loss: 0.5052 - learning_rate: 5.0000e-04
+Epoch 24/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 951ms/step - accuracy: 0.9437 - loss: 0.1580
+Epoch 24: val_accuracy did not improve from 0.87660
+
+Epoch 24: ReduceLROnPlateau reducing learning rate to 0.0002500000118743628.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 100s 1s/step - accuracy: 0.9431 - loss: 0.1612 - val_accuracy: 0.8694 - val_loss: 0.4357 - learning_rate: 5.0000e-04
+Epoch 25/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 863ms/step - accuracy: 0.9539 - loss: 0.1354
+Epoch 25: val_accuracy improved from 0.87660 to 0.89050, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 925ms/step - accuracy: 0.9574 - loss: 0.1249 - val_accuracy: 0.8905 - val_loss: 0.3768 - learning_rate: 2.5000e-04
+Epoch 26/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 881ms/step - accuracy: 0.9607 - loss: 0.1106
+Epoch 26: val_accuracy improved from 0.89050 to 0.89070, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 941ms/step - accuracy: 0.9598 - loss: 0.1122 - val_accuracy: 0.8907 - val_loss: 0.3773 - learning_rate: 2.5000e-04
+Epoch 27/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 870ms/step - accuracy: 0.9630 - loss: 0.1059
+Epoch 27: val_accuracy improved from 0.89070 to 0.90280, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 951ms/step - accuracy: 0.9631 - loss: 0.1046 - val_accuracy: 0.9028 - val_loss: 0.3291 - learning_rate: 2.5000e-04
+Epoch 28/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 968ms/step - accuracy: 0.9664 - loss: 0.0979
+Epoch 28: val_accuracy did not improve from 0.90280
+98/98 ━━━━━━━━━━━━━━━━━━━━ 101s 1s/step - accuracy: 0.9642 - loss: 0.0997 - val_accuracy: 0.8887 - val_loss: 0.3825 - learning_rate: 2.5000e-04
+Epoch 29/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 948ms/step - accuracy: 0.9660 - loss: 0.0958
+Epoch 29: val_accuracy did not improve from 0.90280
+98/98 ━━━━━━━━━━━━━━━━━━━━ 99s 1s/step - accuracy: 0.9672 - loss: 0.0947 - val_accuracy: 0.8985 - val_loss: 0.3608 - learning_rate: 2.5000e-04
+Epoch 30/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 937ms/step - accuracy: 0.9669 - loss: 0.0923
+Epoch 30: val_accuracy did not improve from 0.90280
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 973ms/step - accuracy: 0.9665 - loss: 0.0947 - val_accuracy: 0.8886 - val_loss: 0.4033 - learning_rate: 2.5000e-04
+Epoch 31/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 903ms/step - accuracy: 0.9697 - loss: 0.0877
+Epoch 31: val_accuracy did not improve from 0.90280
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 934ms/step - accuracy: 0.9686 - loss: 0.0899 - val_accuracy: 0.8877 - val_loss: 0.4181 - learning_rate: 2.5000e-04
+Epoch 32/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 906ms/step - accuracy: 0.9696 - loss: 0.0846
+Epoch 32: val_accuracy improved from 0.90280 to 0.90330, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+
+Epoch 32: ReduceLROnPlateau reducing learning rate to 0.0001250000059371814.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 953ms/step - accuracy: 0.9697 - loss: 0.0847 - val_accuracy: 0.9033 - val_loss: 0.3750 - learning_rate: 2.5000e-04
+Epoch 33/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 905ms/step - accuracy: 0.9744 - loss: 0.0743
+Epoch 33: val_accuracy improved from 0.90330 to 0.91280, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 962ms/step - accuracy: 0.9765 - loss: 0.0680 - val_accuracy: 0.9128 - val_loss: 0.3204 - learning_rate: 1.2500e-04
+Epoch 34/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 881ms/step - accuracy: 0.9793 - loss: 0.0579
+Epoch 34: val_accuracy did not improve from 0.91280
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 929ms/step - accuracy: 0.9791 - loss: 0.0588 - val_accuracy: 0.9113 - val_loss: 0.3374 - learning_rate: 1.2500e-04
+Epoch 35/100
+97/98 ━━━━━━━━━━━━━━━━━━━━ 0s 882ms/step - accuracy: 0.9780 - loss: 0.0624
+Epoch 35: val_accuracy did not improve from 0.91280
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 912ms/step - accuracy: 0.9790 - loss: 0.0597 - val_accuracy: 0.9042 - val_loss: 0.3627 - learning_rate: 1.2500e-04
+Epoch 36/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 890ms/step - accuracy: 0.9795 - loss: 0.0571
+Epoch 36: val_accuracy did not improve from 0.91280
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 920ms/step - accuracy: 0.9798 - loss: 0.0572 - val_accuracy: 0.8984 - val_loss: 0.3907 - learning_rate: 1.2500e-04
+Epoch 37/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 910ms/step - accuracy: 0.9825 - loss: 0.0511
+Epoch 37: val_accuracy did not improve from 0.91280
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 948ms/step - accuracy: 0.9817 - loss: 0.0534 - val_accuracy: 0.9072 - val_loss: 0.3786 - learning_rate: 1.2500e-04
+Epoch 38/100
+97/98 ━━━━━━━━━━━━━━━━━━━━ 0s 910ms/step - accuracy: 0.9817 - loss: 0.0532
+Epoch 38: val_accuracy improved from 0.91280 to 0.91390, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+
+Epoch 38: ReduceLROnPlateau reducing learning rate to 6.25000029685907e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 949ms/step - accuracy: 0.9810 - loss: 0.0535 - val_accuracy: 0.9139 - val_loss: 0.3480 - learning_rate: 1.2500e-04
+Epoch 39/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 903ms/step - accuracy: 0.9846 - loss: 0.0454
+Epoch 39: val_accuracy did not improve from 0.91390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 951ms/step - accuracy: 0.9852 - loss: 0.0435 - val_accuracy: 0.9119 - val_loss: 0.3508 - learning_rate: 6.2500e-05
+Epoch 40/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 881ms/step - accuracy: 0.9865 - loss: 0.0408
+Epoch 40: val_accuracy did not improve from 0.91390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 931ms/step - accuracy: 0.9864 - loss: 0.0405 - val_accuracy: 0.9115 - val_loss: 0.3489 - learning_rate: 6.2500e-05
+Epoch 41/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 878ms/step - accuracy: 0.9876 - loss: 0.0364
+Epoch 41: val_accuracy improved from 0.91390 to 0.91510, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 938ms/step - accuracy: 0.9874 - loss: 0.0364 - val_accuracy: 0.9151 - val_loss: 0.3488 - learning_rate: 6.2500e-05
+Epoch 42/100
+96/98 ━━━━━━━━━━━━━━━━━━━━ 1s 875ms/step - accuracy: 0.9855 - loss: 0.0423
+Epoch 42: val_accuracy did not improve from 0.91510
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 904ms/step - accuracy: 0.9864 - loss: 0.0405 - val_accuracy: 0.9099 - val_loss: 0.3733 - learning_rate: 6.2500e-05
+Epoch 43/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 885ms/step - accuracy: 0.9873 - loss: 0.0376
+Epoch 43: val_accuracy improved from 0.91510 to 0.91620, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+
+Epoch 43: ReduceLROnPlateau reducing learning rate to 3.125000148429535e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 924ms/step - accuracy: 0.9873 - loss: 0.0374 - val_accuracy: 0.9162 - val_loss: 0.3609 - learning_rate: 6.2500e-05
+Epoch 44/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 893ms/step - accuracy: 0.9878 - loss: 0.0354
+Epoch 44: val_accuracy improved from 0.91620 to 0.91650, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 933ms/step - accuracy: 0.9878 - loss: 0.0351 - val_accuracy: 0.9165 - val_loss: 0.3429 - learning_rate: 3.1250e-05
+Epoch 45/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 906ms/step - accuracy: 0.9890 - loss: 0.0316
+Epoch 45: val_accuracy improved from 0.91650 to 0.91800, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 95s 964ms/step - accuracy: 0.9889 - loss: 0.0318 - val_accuracy: 0.9180 - val_loss: 0.3398 - learning_rate: 3.1250e-05
+Epoch 46/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 928ms/step - accuracy: 0.9892 - loss: 0.0304
+Epoch 46: val_accuracy improved from 0.91800 to 0.91860, saving model to /home/gomine/projects/custom-regularizer/checkpoints/baseline_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 98s 996ms/step - accuracy: 0.9892 - loss: 0.0311 - val_accuracy: 0.9186 - val_loss: 0.3378 - learning_rate: 3.1250e-05
+Epoch 47/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 954ms/step - accuracy: 0.9892 - loss: 0.0303
+Epoch 47: val_accuracy did not improve from 0.91860
+98/98 ━━━━━━━━━━━━━━━━━━━━ 99s 1s/step - accuracy: 0.9896 - loss: 0.0300 - val_accuracy: 0.9175 - val_loss: 0.3418 - learning_rate: 3.1250e-05
+Epoch 48/100
+97/98 ━━━━━━━━━━━━━━━━━━━━ 0s 914ms/step - accuracy: 0.9905 - loss: 0.0278
+Epoch 48: val_accuracy did not improve from 0.91860
+
+Epoch 48: ReduceLROnPlateau reducing learning rate to 1.5625000742147677e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 947ms/step - accuracy: 0.9907 - loss: 0.0274 - val_accuracy: 0.9178 - val_loss: 0.3461 - learning_rate: 3.1250e-05
+Epoch 48: early stopping
+Restoring model weights from the end of the best epoch: 33.
+2025-12-13 13:36:50.995007: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:103] Profiler session initializing.
+2025-12-13 13:36:50.995613: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:118] Profiler session started.
+2025-12-13 13:36:51.287016: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:136] Profiler session tear down.
+I0000 00:00:1765625811.288049   39649 cupti_tracer.cc:1381] CUPTI activity buffer flushed
+TensorBoard logs will be saved to: /home/gomine/projects/custom-regularizer/logs/l1_reg_20251213-133650
+
+Training l1_reg...
+======================================================================
+Epoch 1/100
+ 9/98 ━━━━━━━━━━━━━━━━━━━━ 1:14 837ms/step - accuracy: 0.1707 - loss: 20.38472025-12-13 13:37:11.331561: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:103] Profiler session initializing.
+2025-12-13 13:37:11.331599: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:118] Profiler session started.
+19/98 ━━━━━━━━━━━━━━━━━━━━ 1:18 1000ms/step - accuracy: 0.2183 - loss: 19.86172025-12-13 13:37:24.061649: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:68] Profiler session collecting data.
+I0000 00:00:1765625844.452205   39649 cupti_tracer.cc:1381] CUPTI activity buffer flushed
+I0000 00:00:1765625846.436056   39649 cupti_collector.cc:841]  GpuTracer has collected 101566 callback api events and 102359 activity events.
+I0000 00:00:1765625846.436220   39649 cupti_collector.cc:844]  GpuTracer max callback_events: 2097152, max activity events: 2097152
+2025-12-13 13:37:28.715014: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:136] Profiler session tear down.
+2025-12-13 13:37:28.716973: I external/local_xla/xla/tsl/profiler/rpc/client/save_profile.cc:150] Collecting XSpace to repository: /home/gomine/projects/custom-regularizer/logs/l1_reg_20251213-133650/train/plugi
+ns/profile/2025_12_13_13_37_28/DESKTOP-U3KFGAU.xplane.pb
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.3526 - loss: 16.7471
+Epoch 1: val_accuracy improved from None to 0.10000, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 117s 1s/step - accuracy: 0.4358 - loss: 13.3115 - val_accuracy: 0.1000 - val_loss: 9.9172 - learning_rate: 0.0010
+Epoch 2/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 931ms/step - accuracy: 0.5579 - loss: 6.3657
+Epoch 2: val_accuracy improved from 0.10000 to 0.11710, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 98s 994ms/step - accuracy: 0.5757 - loss: 5.5560 - val_accuracy: 0.1171 - val_loss: 6.8495 - learning_rate: 0.0010
+Epoch 3/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 887ms/step - accuracy: 0.6311 - loss: 4.0370
+Epoch 3: val_accuracy improved from 0.11710 to 0.12840, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 948ms/step - accuracy: 0.6476 - loss: 3.7920 - val_accuracy: 0.1284 - val_loss: 5.7744 - learning_rate: 0.0010
+Epoch 4/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 901ms/step - accuracy: 0.6877 - loss: 3.2052
+Epoch 4: val_accuracy did not improve from 0.12840
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 950ms/step - accuracy: 0.6921 - loss: 3.0873 - val_accuracy: 0.1111 - val_loss: 6.2947 - learning_rate: 0.0010
+Epoch 5/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 882ms/step - accuracy: 0.7147 - loss: 2.7786
+Epoch 5: val_accuracy improved from 0.12840 to 0.25780, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 942ms/step - accuracy: 0.7198 - loss: 2.6932 - val_accuracy: 0.2578 - val_loss: 4.2069 - learning_rate: 0.0010
+Epoch 6/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 951ms/step - accuracy: 0.7279 - loss: 2.5080
+Epoch 6: val_accuracy improved from 0.25780 to 0.36820, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 100s 1s/step - accuracy: 0.7355 - loss: 2.4506 - val_accuracy: 0.3682 - val_loss: 3.8488 - learning_rate: 0.0010
+Epoch 7/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.7475 - loss: 2.2874
+Epoch 7: val_accuracy improved from 0.36820 to 0.45440, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 107s 1s/step - accuracy: 0.7508 - loss: 2.2703 - val_accuracy: 0.4544 - val_loss: 3.5196 - learning_rate: 0.0010
+Epoch 8/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.7660 - loss: 2.1756
+Epoch 8: val_accuracy improved from 0.45440 to 0.62860, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 111s 1s/step - accuracy: 0.7675 - loss: 2.1242 - val_accuracy: 0.6286 - val_loss: 2.4804 - learning_rate: 0.0010
+Epoch 9/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.7752 - loss: 2.0032
+Epoch 9: val_accuracy did not improve from 0.62860
+98/98 ━━━━━━━━━━━━━━━━━━━━ 107s 1s/step - accuracy: 0.7744 - loss: 1.9888 - val_accuracy: 0.4570 - val_loss: 3.0509 - learning_rate: 0.0010
+Epoch 10/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.7739 - loss: 1.9592
+Epoch 10: val_accuracy did not improve from 0.62860
+98/98 ━━━━━━━━━━━━━━━━━━━━ 112s 1s/step - accuracy: 0.7818 - loss: 1.9115 - val_accuracy: 0.6244 - val_loss: 2.4067 - learning_rate: 0.0010
+Epoch 11/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.7874 - loss: 1.8393
+Epoch 11: val_accuracy improved from 0.62860 to 0.73940, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 111s 1s/step - accuracy: 0.7896 - loss: 1.8206 - val_accuracy: 0.7394 - val_loss: 1.9535 - learning_rate: 0.0010
+Epoch 12/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.7930 - loss: 1.7986
+Epoch 12: val_accuracy did not improve from 0.73940
+98/98 ━━━━━━━━━━━━━━━━━━━━ 125s 1s/step - accuracy: 0.7964 - loss: 1.7678 - val_accuracy: 0.6000 - val_loss: 2.4767 - learning_rate: 0.0010
+Epoch 13/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.8038 - loss: 1.7300
+Epoch 13: val_accuracy did not improve from 0.73940
+98/98 ━━━━━━━━━━━━━━━━━━━━ 125s 1s/step - accuracy: 0.8027 - loss: 1.7100 - val_accuracy: 0.6051 - val_loss: 2.4002 - learning_rate: 0.0010
+Epoch 14/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.8083 - loss: 1.6663
+Epoch 14: val_accuracy did not improve from 0.73940
+98/98 ━━━━━━━━━━━━━━━━━━━━ 128s 1s/step - accuracy: 0.8065 - loss: 1.6633 - val_accuracy: 0.6169 - val_loss: 2.2092 - learning_rate: 0.0010
+Epoch 15/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.8179 - loss: 1.5959
+Epoch 15: val_accuracy did not improve from 0.73940
+98/98 ━━━━━━━━━━━━━━━━━━━━ 106s 1s/step - accuracy: 0.8147 - loss: 1.6129 - val_accuracy: 0.6083 - val_loss: 2.4382 - learning_rate: 0.0010
+Epoch 16/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.8185 - loss: 1.5699
+Epoch 16: val_accuracy did not improve from 0.73940
+
+Epoch 16: ReduceLROnPlateau reducing learning rate to 0.0005000000237487257.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 105s 1s/step - accuracy: 0.8207 - loss: 1.5529 - val_accuracy: 0.7059 - val_loss: 1.9561 - learning_rate: 0.0010
+Epoch 17/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.8446 - loss: 1.3583
+Epoch 17: val_accuracy improved from 0.73940 to 0.74610, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 106s 1s/step - accuracy: 0.8518 - loss: 1.2653 - val_accuracy: 0.7461 - val_loss: 1.5257 - learning_rate: 5.0000e-04
+Epoch 18/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.8554 - loss: 1.1840
+Epoch 18: val_accuracy did not improve from 0.74610
+98/98 ━━━━━━━━━━━━━━━━━━━━ 107s 1s/step - accuracy: 0.8578 - loss: 1.1898 - val_accuracy: 0.7070 - val_loss: 1.6768 - learning_rate: 5.0000e-04
+Epoch 19/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.8609 - loss: 1.2108
+Epoch 19: val_accuracy did not improve from 0.74610
+98/98 ━━━━━━━━━━━━━━━━━━━━ 103s 1s/step - accuracy: 0.8582 - loss: 1.2018 - val_accuracy: 0.7282 - val_loss: 1.5522 - learning_rate: 5.0000e-04
+Epoch 20/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.8611 - loss: 1.1788
+Epoch 20: val_accuracy did not improve from 0.74610
+98/98 ━━━━━━━━━━━━━━━━━━━━ 108s 1s/step - accuracy: 0.8604 - loss: 1.1804 - val_accuracy: 0.7361 - val_loss: 1.5758 - learning_rate: 5.0000e-04
+Epoch 21/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.8570 - loss: 1.1797
+Epoch 21: val_accuracy improved from 0.74610 to 0.76610, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 117s 1s/step - accuracy: 0.8573 - loss: 1.1718 - val_accuracy: 0.7661 - val_loss: 1.4827 - learning_rate: 5.0000e-04
+Epoch 22/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.8597 - loss: 1.1627
+Epoch 22: val_accuracy improved from 0.76610 to 0.77010, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 118s 1s/step - accuracy: 0.8590 - loss: 1.1669 - val_accuracy: 0.7701 - val_loss: 1.4480 - learning_rate: 5.0000e-04
+Epoch 23/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 954ms/step - accuracy: 0.8607 - loss: 1.1402
+Epoch 23: val_accuracy did not improve from 0.77010
+98/98 ━━━━━━━━━━━━━━━━━━━━ 100s 1s/step - accuracy: 0.8609 - loss: 1.1379 - val_accuracy: 0.7258 - val_loss: 1.6304 - learning_rate: 5.0000e-04
+Epoch 24/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 888ms/step - accuracy: 0.8637 - loss: 1.1194
+Epoch 24: val_accuracy did not improve from 0.77010
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 933ms/step - accuracy: 0.8641 - loss: 1.1168 - val_accuracy: 0.7463 - val_loss: 1.5540 - learning_rate: 5.0000e-04
+Epoch 25/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 994ms/step - accuracy: 0.8658 - loss: 1.1288
+Epoch 25: val_accuracy did not improve from 0.77010
+98/98 ━━━━━━━━━━━━━━━━━━━━ 102s 1s/step - accuracy: 0.8665 - loss: 1.1147 - val_accuracy: 0.7265 - val_loss: 1.6108 - learning_rate: 5.0000e-04
+Epoch 26/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 998ms/step - accuracy: 0.8685 - loss: 1.1089
+Epoch 26: val_accuracy did not improve from 0.77010
+98/98 ━━━━━━━━━━━━━━━━━━━━ 102s 1s/step - accuracy: 0.8692 - loss: 1.1081 - val_accuracy: 0.7584 - val_loss: 1.4798 - learning_rate: 5.0000e-04
+Epoch 27/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 981ms/step - accuracy: 0.8666 - loss: 1.0997
+Epoch 27: val_accuracy did not improve from 0.77010
+
+Epoch 27: ReduceLROnPlateau reducing learning rate to 0.0002500000118743628.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 103s 1s/step - accuracy: 0.8662 - loss: 1.0882 - val_accuracy: 0.7182 - val_loss: 1.7301 - learning_rate: 5.0000e-04
+Epoch 28/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 886ms/step - accuracy: 0.8850 - loss: 0.9640
+Epoch 28: val_accuracy improved from 0.77010 to 0.83700, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 944ms/step - accuracy: 0.8909 - loss: 0.9179 - val_accuracy: 0.8370 - val_loss: 1.0371 - learning_rate: 2.5000e-04
+Epoch 29/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 875ms/step - accuracy: 0.8993 - loss: 0.8596
+Epoch 29: val_accuracy improved from 0.83700 to 0.86390, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 931ms/step - accuracy: 0.8979 - loss: 0.8631 - val_accuracy: 0.8639 - val_loss: 0.9674 - learning_rate: 2.5000e-04
+Epoch 30/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 881ms/step - accuracy: 0.8985 - loss: 0.8691
+Epoch 30: val_accuracy did not improve from 0.86390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 925ms/step - accuracy: 0.8975 - loss: 0.8698 - val_accuracy: 0.8095 - val_loss: 1.1269 - learning_rate: 2.5000e-04
+Epoch 31/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 882ms/step - accuracy: 0.8965 - loss: 0.8561
+Epoch 31: val_accuracy did not improve from 0.86390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 929ms/step - accuracy: 0.8970 - loss: 0.8553 - val_accuracy: 0.8266 - val_loss: 1.1099 - learning_rate: 2.5000e-04
+Epoch 32/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 869ms/step - accuracy: 0.9001 - loss: 0.8438
+Epoch 32: val_accuracy did not improve from 0.86390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 914ms/step - accuracy: 0.8993 - loss: 0.8429 - val_accuracy: 0.8447 - val_loss: 1.0119 - learning_rate: 2.5000e-04
+Epoch 33/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 863ms/step - accuracy: 0.9024 - loss: 0.8234
+Epoch 33: val_accuracy did not improve from 0.86390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 908ms/step - accuracy: 0.9022 - loss: 0.8308 - val_accuracy: 0.7764 - val_loss: 1.3759 - learning_rate: 2.5000e-04
+Epoch 34/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 845ms/step - accuracy: 0.9039 - loss: 0.8408
+Epoch 34: val_accuracy did not improve from 0.86390
+
+Epoch 34: ReduceLROnPlateau reducing learning rate to 0.0001250000059371814.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 890ms/step - accuracy: 0.9014 - loss: 0.8388 - val_accuracy: 0.8450 - val_loss: 0.9905 - learning_rate: 2.5000e-04
+Epoch 35/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 851ms/step - accuracy: 0.9121 - loss: 0.7553
+Epoch 35: val_accuracy did not improve from 0.86390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 896ms/step - accuracy: 0.9158 - loss: 0.7325 - val_accuracy: 0.8566 - val_loss: 0.9101 - learning_rate: 1.2500e-04
+Epoch 36/100
+96/98 ━━━━━━━━━━━━━━━━━━━━ 1s 847ms/step - accuracy: 0.9181 - loss: 0.7079
+Epoch 36: val_accuracy improved from 0.86390 to 0.88390, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 87s 882ms/step - accuracy: 0.9190 - loss: 0.7016 - val_accuracy: 0.8839 - val_loss: 0.8276 - learning_rate: 1.2500e-04
+Epoch 37/100
+97/98 ━━━━━━━━━━━━━━━━━━━━ 0s 885ms/step - accuracy: 0.9207 - loss: 0.7030
+Epoch 37: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 911ms/step - accuracy: 0.9193 - loss: 0.7050 - val_accuracy: 0.8552 - val_loss: 0.9145 - learning_rate: 1.2500e-04
+Epoch 38/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 881ms/step - accuracy: 0.9210 - loss: 0.6896
+Epoch 38: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 908ms/step - accuracy: 0.9212 - loss: 0.6868 - val_accuracy: 0.8816 - val_loss: 0.8127 - learning_rate: 1.2500e-04
+Epoch 39/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 916ms/step - accuracy: 0.9243 - loss: 0.6698
+Epoch 39: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 944ms/step - accuracy: 0.9223 - loss: 0.6725 - val_accuracy: 0.8398 - val_loss: 0.9770 - learning_rate: 1.2500e-04
+Epoch 40/100
+96/98 ━━━━━━━━━━━━━━━━━━━━ 1s 919ms/step - accuracy: 0.9236 - loss: 0.6766
+Epoch 40: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 944ms/step - accuracy: 0.9226 - loss: 0.6800 - val_accuracy: 0.8508 - val_loss: 0.9247 - learning_rate: 1.2500e-04
+Epoch 41/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 907ms/step - accuracy: 0.9218 - loss: 0.6813
+Epoch 41: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 952ms/step - accuracy: 0.9218 - loss: 0.6786 - val_accuracy: 0.8460 - val_loss: 0.9552 - learning_rate: 1.2500e-04
+Epoch 42/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 899ms/step - accuracy: 0.9240 - loss: 0.6741
+Epoch 42: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 945ms/step - accuracy: 0.9232 - loss: 0.6708 - val_accuracy: 0.8839 - val_loss: 0.8020 - learning_rate: 1.2500e-04
+Epoch 43/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 888ms/step - accuracy: 0.9258 - loss: 0.6533
+Epoch 43: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 934ms/step - accuracy: 0.9241 - loss: 0.6614 - val_accuracy: 0.8586 - val_loss: 0.9053 - learning_rate: 1.2500e-04
+Epoch 44/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 893ms/step - accuracy: 0.9262 - loss: 0.6546
+Epoch 44: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 939ms/step - accuracy: 0.9245 - loss: 0.6589 - val_accuracy: 0.8673 - val_loss: 0.8585 - learning_rate: 1.2500e-04
+Epoch 45/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 20s/step - accuracy: 0.9255 - loss: 0.6539
+Epoch 45: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 1953s 20s/step - accuracy: 0.9258 - loss: 0.6513 - val_accuracy: 0.8637 - val_loss: 0.8744 - learning_rate: 1.2500e-04
+Epoch 46/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 869ms/step - accuracy: 0.9281 - loss: 0.6475
+Epoch 46: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 912ms/step - accuracy: 0.9271 - loss: 0.6542 - val_accuracy: 0.8611 - val_loss: 0.8684 - learning_rate: 1.2500e-04
+Epoch 47/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 843ms/step - accuracy: 0.9271 - loss: 0.6513
+Epoch 47: val_accuracy did not improve from 0.88390
+
+Epoch 47: ReduceLROnPlateau reducing learning rate to 6.25000029685907e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 87s 886ms/step - accuracy: 0.9259 - loss: 0.6516 - val_accuracy: 0.8563 - val_loss: 0.8873 - learning_rate: 1.2500e-04
+Epoch 48/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 860ms/step - accuracy: 0.9314 - loss: 0.6080
+Epoch 48: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 905ms/step - accuracy: 0.9349 - loss: 0.5898 - val_accuracy: 0.8795 - val_loss: 0.7645 - learning_rate: 6.2500e-05
+Epoch 49/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 864ms/step - accuracy: 0.9408 - loss: 0.5647
+Epoch 49: val_accuracy did not improve from 0.88390
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 911ms/step - accuracy: 0.9401 - loss: 0.5646 - val_accuracy: 0.8800 - val_loss: 0.7750 - learning_rate: 6.2500e-05
+Epoch 50/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 869ms/step - accuracy: 0.9427 - loss: 0.5578
+Epoch 50: val_accuracy improved from 0.88390 to 0.89460, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 930ms/step - accuracy: 0.9414 - loss: 0.5583 - val_accuracy: 0.8946 - val_loss: 0.7214 - learning_rate: 6.2500e-05
+Epoch 51/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 865ms/step - accuracy: 0.9414 - loss: 0.5555
+Epoch 51: val_accuracy did not improve from 0.89460
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 913ms/step - accuracy: 0.9396 - loss: 0.5598 - val_accuracy: 0.8945 - val_loss: 0.7103 - learning_rate: 6.2500e-05
+Epoch 52/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 877ms/step - accuracy: 0.9423 - loss: 0.5552
+Epoch 52: val_accuracy did not improve from 0.89460
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 935ms/step - accuracy: 0.9404 - loss: 0.5657 - val_accuracy: 0.8938 - val_loss: 0.7402 - learning_rate: 6.2500e-05
+Epoch 53/100
+96/98 ━━━━━━━━━━━━━━━━━━━━ 1s 858ms/step - accuracy: 0.9423 - loss: 0.5589
+Epoch 53: val_accuracy did not improve from 0.89460
+98/98 ━━━━━━━━━━━━━━━━━━━━ 87s 888ms/step - accuracy: 0.9418 - loss: 0.5573 - val_accuracy: 0.8904 - val_loss: 0.7333 - learning_rate: 6.2500e-05
+Epoch 54/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 877ms/step - accuracy: 0.9418 - loss: 0.5515
+Epoch 54: val_accuracy did not improve from 0.89460
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 905ms/step - accuracy: 0.9426 - loss: 0.5473 - val_accuracy: 0.8852 - val_loss: 0.7688 - learning_rate: 6.2500e-05
+Epoch 55/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 836ms/step - accuracy: 0.9406 - loss: 0.5484
+Epoch 55: val_accuracy did not improve from 0.89460
+98/98 ━━━━━━━━━━━━━━━━━━━━ 86s 878ms/step - accuracy: 0.9419 - loss: 0.5449 - val_accuracy: 0.8921 - val_loss: 0.7216 - learning_rate: 6.2500e-05
+Epoch 56/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 835ms/step - accuracy: 0.9446 - loss: 0.5397
+Epoch 56: val_accuracy did not improve from 0.89460
+
+Epoch 56: ReduceLROnPlateau reducing learning rate to 3.125000148429535e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 87s 884ms/step - accuracy: 0.9446 - loss: 0.5391 - val_accuracy: 0.8943 - val_loss: 0.7122 - learning_rate: 6.2500e-05
+Epoch 57/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 838ms/step - accuracy: 0.9480 - loss: 0.5204
+Epoch 57: val_accuracy improved from 0.89460 to 0.89800, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 894ms/step - accuracy: 0.9490 - loss: 0.5124 - val_accuracy: 0.8980 - val_loss: 0.6874 - learning_rate: 3.1250e-05
+Epoch 58/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 847ms/step - accuracy: 0.9488 - loss: 0.5012
+Epoch 58: val_accuracy did not improve from 0.89800
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 891ms/step - accuracy: 0.9501 - loss: 0.4987 - val_accuracy: 0.8966 - val_loss: 0.6942 - learning_rate: 3.1250e-05
+Epoch 59/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 854ms/step - accuracy: 0.9524 - loss: 0.4926
+Epoch 59: val_accuracy did not improve from 0.89800
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 900ms/step - accuracy: 0.9521 - loss: 0.4931 - val_accuracy: 0.8980 - val_loss: 0.6869 - learning_rate: 3.1250e-05
+Epoch 60/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 867ms/step - accuracy: 0.9508 - loss: 0.5027
+Epoch 60: val_accuracy improved from 0.89800 to 0.90160, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 907ms/step - accuracy: 0.9512 - loss: 0.4997 - val_accuracy: 0.9016 - val_loss: 0.6775 - learning_rate: 3.1250e-05
+Epoch 61/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 851ms/step - accuracy: 0.9515 - loss: 0.4956
+Epoch 61: val_accuracy did not improve from 0.90160
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 903ms/step - accuracy: 0.9519 - loss: 0.4955 - val_accuracy: 0.8976 - val_loss: 0.6945 - learning_rate: 3.1250e-05
+Epoch 62/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 893ms/step - accuracy: 0.9499 - loss: 0.4915
+Epoch 62: val_accuracy improved from 0.90160 to 0.90370, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 949ms/step - accuracy: 0.9513 - loss: 0.4892 - val_accuracy: 0.9037 - val_loss: 0.6630 - learning_rate: 3.1250e-05
+Epoch 63/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 875ms/step - accuracy: 0.9524 - loss: 0.4879
+Epoch 63: val_accuracy did not improve from 0.90370
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 921ms/step - accuracy: 0.9528 - loss: 0.4847 - val_accuracy: 0.8989 - val_loss: 0.6860 - learning_rate: 3.1250e-05
+Epoch 64/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 884ms/step - accuracy: 0.9511 - loss: 0.4841
+Epoch 64: val_accuracy did not improve from 0.90370
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 942ms/step - accuracy: 0.9507 - loss: 0.4852 - val_accuracy: 0.9032 - val_loss: 0.6728 - learning_rate: 3.1250e-05
+Epoch 65/100
+96/98 ━━━━━━━━━━━━━━━━━━━━ 1s 974ms/step - accuracy: 0.9563 - loss: 0.4738
+Epoch 65: val_accuracy did not improve from 0.90370
+98/98 ━━━━━━━━━━━━━━━━━━━━ 99s 1s/step - accuracy: 0.9542 - loss: 0.4788 - val_accuracy: 0.9033 - val_loss: 0.6665 - learning_rate: 3.1250e-05
+Epoch 66/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 980ms/step - accuracy: 0.9543 - loss: 0.4752
+Epoch 66: val_accuracy did not improve from 0.90370
+98/98 ━━━━━━━━━━━━━━━━━━━━ 102s 1s/step - accuracy: 0.9535 - loss: 0.4773 - val_accuracy: 0.8967 - val_loss: 0.6875 - learning_rate: 3.1250e-05
+Epoch 67/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 912ms/step - accuracy: 0.9540 - loss: 0.4755
+Epoch 67: val_accuracy did not improve from 0.90370
+
+Epoch 67: ReduceLROnPlateau reducing learning rate to 1.5625000742147677e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 95s 963ms/step - accuracy: 0.9548 - loss: 0.4741 - val_accuracy: 0.8989 - val_loss: 0.6829 - learning_rate: 3.1250e-05
+Epoch 68/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 976ms/step - accuracy: 0.9570 - loss: 0.4629
+Epoch 68: val_accuracy improved from 0.90370 to 0.90590, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 108s 1s/step - accuracy: 0.9569 - loss: 0.4599 - val_accuracy: 0.9059 - val_loss: 0.6476 - learning_rate: 1.5625e-05
+Epoch 69/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 935ms/step - accuracy: 0.9587 - loss: 0.4529
+Epoch 69: val_accuracy did not improve from 0.90590
+98/98 ━━━━━━━━━━━━━━━━━━━━ 97s 987ms/step - accuracy: 0.9580 - loss: 0.4547 - val_accuracy: 0.8979 - val_loss: 0.6899 - learning_rate: 1.5625e-05
+Epoch 70/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 936ms/step - accuracy: 0.9580 - loss: 0.4563
+Epoch 70: val_accuracy improved from 0.90590 to 0.90660, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 98s 1s/step - accuracy: 0.9589 - loss: 0.4539 - val_accuracy: 0.9066 - val_loss: 0.6450 - learning_rate: 1.5625e-05
+Epoch 71/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 900ms/step - accuracy: 0.9569 - loss: 0.4519
+Epoch 71: val_accuracy improved from 0.90660 to 0.90710, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 960ms/step - accuracy: 0.9579 - loss: 0.4510 - val_accuracy: 0.9071 - val_loss: 0.6453 - learning_rate: 1.5625e-05
+Epoch 72/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 920ms/step - accuracy: 0.9592 - loss: 0.4497
+Epoch 72: val_accuracy did not improve from 0.90710
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 971ms/step - accuracy: 0.9590 - loss: 0.4496 - val_accuracy: 0.9030 - val_loss: 0.6660 - learning_rate: 1.5625e-05
+Epoch 73/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 924ms/step - accuracy: 0.9572 - loss: 0.4540
+Epoch 73: val_accuracy did not improve from 0.90710
+98/98 ━━━━━━━━━━━━━━━━━━━━ 97s 990ms/step - accuracy: 0.9571 - loss: 0.4528 - val_accuracy: 0.9044 - val_loss: 0.6541 - learning_rate: 1.5625e-05
+Epoch 74/100
+96/98 ━━━━━━━━━━━━━━━━━━━━ 1s 964ms/step - accuracy: 0.9576 - loss: 0.4504
+Epoch 74: val_accuracy did not improve from 0.90710
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 991ms/step - accuracy: 0.9580 - loss: 0.4500 - val_accuracy: 0.9039 - val_loss: 0.6552 - learning_rate: 1.5625e-05
+Epoch 75/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 927ms/step - accuracy: 0.9586 - loss: 0.4485
+Epoch 75: val_accuracy did not improve from 0.90710
+
+Epoch 75: ReduceLROnPlateau reducing learning rate to 7.812500371073838e-06.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 95s 972ms/step - accuracy: 0.9599 - loss: 0.4458 - val_accuracy: 0.9031 - val_loss: 0.6523 - learning_rate: 1.5625e-05
+Epoch 76/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 863ms/step - accuracy: 0.9592 - loss: 0.4433
+Epoch 76: val_accuracy did not improve from 0.90710
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 907ms/step - accuracy: 0.9607 - loss: 0.4406 - val_accuracy: 0.9047 - val_loss: 0.6506 - learning_rate: 7.8125e-06
+Epoch 77/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 873ms/step - accuracy: 0.9627 - loss: 0.4375
+Epoch 77: val_accuracy did not improve from 0.90710
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 919ms/step - accuracy: 0.9622 - loss: 0.4371 - val_accuracy: 0.9050 - val_loss: 0.6541 - learning_rate: 7.8125e-06
+Epoch 78/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 867ms/step - accuracy: 0.9602 - loss: 0.4394
+Epoch 78: val_accuracy did not improve from 0.90710
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 914ms/step - accuracy: 0.9611 - loss: 0.4367 - val_accuracy: 0.9054 - val_loss: 0.6405 - learning_rate: 7.8125e-06
+Epoch 79/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 864ms/step - accuracy: 0.9588 - loss: 0.4407
+Epoch 79: val_accuracy did not improve from 0.90710
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 894ms/step - accuracy: 0.9598 - loss: 0.4378 - val_accuracy: 0.9035 - val_loss: 0.6556 - learning_rate: 7.8125e-06
+Epoch 80/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 888ms/step - accuracy: 0.9605 - loss: 0.4382
+Epoch 80: val_accuracy did not improve from 0.90710
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 912ms/step - accuracy: 0.9617 - loss: 0.4341 - val_accuracy: 0.9054 - val_loss: 0.6525 - learning_rate: 7.8125e-06
+Epoch 81/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 890ms/step - accuracy: 0.9608 - loss: 0.4360
+Epoch 81: val_accuracy did not improve from 0.90710
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 915ms/step - accuracy: 0.9611 - loss: 0.4347 - val_accuracy: 0.9048 - val_loss: 0.6453 - learning_rate: 7.8125e-06
+Epoch 82/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 880ms/step - accuracy: 0.9610 - loss: 0.4329
+Epoch 82: val_accuracy did not improve from 0.90710
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 924ms/step - accuracy: 0.9616 - loss: 0.4317 - val_accuracy: 0.9060 - val_loss: 0.6443 - learning_rate: 7.8125e-06
+Epoch 83/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 842ms/step - accuracy: 0.9622 - loss: 0.4339
+Epoch 83: val_accuracy did not improve from 0.90710
+
+Epoch 83: ReduceLROnPlateau reducing learning rate to 3.906250185536919e-06.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 87s 886ms/step - accuracy: 0.9615 - loss: 0.4332 - val_accuracy: 0.9047 - val_loss: 0.6451 - learning_rate: 7.8125e-06
+Epoch 84/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 860ms/step - accuracy: 0.9611 - loss: 0.4310
+Epoch 84: val_accuracy improved from 0.90710 to 0.90750, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l1_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 95s 968ms/step - accuracy: 0.9619 - loss: 0.4285 - val_accuracy: 0.9075 - val_loss: 0.6381 - learning_rate: 3.9063e-06
+Epoch 85/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 892ms/step - accuracy: 0.9618 - loss: 0.4303
+Epoch 85: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 937ms/step - accuracy: 0.9628 - loss: 0.4274 - val_accuracy: 0.9065 - val_loss: 0.6411 - learning_rate: 3.9063e-06
+Epoch 86/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 891ms/step - accuracy: 0.9615 - loss: 0.4319
+Epoch 86: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 942ms/step - accuracy: 0.9634 - loss: 0.4269 - val_accuracy: 0.9052 - val_loss: 0.6409 - learning_rate: 3.9063e-06
+Epoch 87/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 865ms/step - accuracy: 0.9621 - loss: 0.4294
+Epoch 87: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 909ms/step - accuracy: 0.9621 - loss: 0.4270 - val_accuracy: 0.9066 - val_loss: 0.6400 - learning_rate: 3.9063e-06
+Epoch 88/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 851ms/step - accuracy: 0.9635 - loss: 0.4272
+Epoch 88: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 895ms/step - accuracy: 0.9635 - loss: 0.4256 - val_accuracy: 0.9058 - val_loss: 0.6395 - learning_rate: 3.9063e-06
+Epoch 89/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 855ms/step - accuracy: 0.9642 - loss: 0.4235
+Epoch 89: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 900ms/step - accuracy: 0.9630 - loss: 0.4253 - val_accuracy: 0.9062 - val_loss: 0.6364 - learning_rate: 3.9063e-06
+Epoch 90/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 867ms/step - accuracy: 0.9647 - loss: 0.4229
+Epoch 90: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 911ms/step - accuracy: 0.9638 - loss: 0.4251 - val_accuracy: 0.9063 - val_loss: 0.6377 - learning_rate: 3.9063e-06
+Epoch 91/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 872ms/step - accuracy: 0.9639 - loss: 0.4261
+Epoch 91: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 916ms/step - accuracy: 0.9634 - loss: 0.4248 - val_accuracy: 0.9056 - val_loss: 0.6399 - learning_rate: 3.9063e-06
+Epoch 92/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 877ms/step - accuracy: 0.9629 - loss: 0.4242
+Epoch 92: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 923ms/step - accuracy: 0.9632 - loss: 0.4240 - val_accuracy: 0.9045 - val_loss: 0.6379 - learning_rate: 3.9063e-06
+Epoch 93/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 893ms/step - accuracy: 0.9639 - loss: 0.4222
+Epoch 93: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 938ms/step - accuracy: 0.9637 - loss: 0.4233 - val_accuracy: 0.9048 - val_loss: 0.6423 - learning_rate: 3.9063e-06
+Epoch 94/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 867ms/step - accuracy: 0.9628 - loss: 0.4245
+Epoch 94: val_accuracy did not improve from 0.90750
+
+Epoch 94: ReduceLROnPlateau reducing learning rate to 1.9531250927684596e-06.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 912ms/step - accuracy: 0.9630 - loss: 0.4250 - val_accuracy: 0.9055 - val_loss: 0.6422 - learning_rate: 3.9063e-06
+Epoch 95/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 886ms/step - accuracy: 0.9638 - loss: 0.4214
+Epoch 95: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 932ms/step - accuracy: 0.9632 - loss: 0.4217 - val_accuracy: 0.9067 - val_loss: 0.6386 - learning_rate: 1.9531e-06
+Epoch 96/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 883ms/step - accuracy: 0.9638 - loss: 0.4229
+Epoch 96: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 929ms/step - accuracy: 0.9642 - loss: 0.4214 - val_accuracy: 0.9057 - val_loss: 0.6421 - learning_rate: 1.9531e-06
+Epoch 97/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 885ms/step - accuracy: 0.9657 - loss: 0.4191
+Epoch 97: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 930ms/step - accuracy: 0.9648 - loss: 0.4200 - val_accuracy: 0.9055 - val_loss: 0.6398 - learning_rate: 1.9531e-06
+Epoch 98/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 878ms/step - accuracy: 0.9648 - loss: 0.4192
+Epoch 98: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 923ms/step - accuracy: 0.9648 - loss: 0.4193 - val_accuracy: 0.9051 - val_loss: 0.6398 - learning_rate: 1.9531e-06
+Epoch 99/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 886ms/step - accuracy: 0.9627 - loss: 0.4218
+Epoch 99: val_accuracy did not improve from 0.90750
+
+Epoch 99: ReduceLROnPlateau reducing learning rate to 1e-06.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 931ms/step - accuracy: 0.9630 - loss: 0.4198 - val_accuracy: 0.9048 - val_loss: 0.6397 - learning_rate: 1.9531e-06
+Epoch 100/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 852ms/step - accuracy: 0.9619 - loss: 0.4257
+Epoch 100: val_accuracy did not improve from 0.90750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 897ms/step - accuracy: 0.9644 - loss: 0.4199 - val_accuracy: 0.9070 - val_loss: 0.6368 - learning_rate: 1.0000e-06
+Restoring model weights from the end of the best epoch: 89.
+2025-12-13 16:47:09.347284: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:103] Profiler session initializing.
+2025-12-13 16:47:09.347780: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:118] Profiler session started.
+2025-12-13 16:47:09.651447: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:136] Profiler session tear down.
+I0000 00:00:1765637229.653094   39649 cupti_tracer.cc:1381] CUPTI activity buffer flushed
+TensorBoard logs will be saved to: /home/gomine/projects/custom-regularizer/logs/l2_reg_20251213-164709
+
+Training l2_reg...
+======================================================================
+Epoch 1/100
+ 9/98 ━━━━━━━━━━━━━━━━━━━━ 1:22 926ms/step - accuracy: 0.1463 - loss: 3.87712025-12-13 16:47:29.708184: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:103] Profiler session initializing.
+2025-12-13 16:47:29.708218: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:118] Profiler session started.
+19/98 ━━━━━━━━━━━━━━━━━━━━ 1:18 988ms/step - accuracy: 0.1938 - loss: 3.44712025-12-13 16:47:41.391462: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:68] Profiler session collecting data.
+I0000 00:00:1765637261.623086   39649 cupti_tracer.cc:1381] CUPTI activity buffer flushed
+I0000 00:00:1765637263.935994   39649 cupti_collector.cc:841]  GpuTracer has collected 101566 callback api events and 102369 activity events.
+I0000 00:00:1765637263.948058   39649 cupti_collector.cc:844]  GpuTracer max callback_events: 2097152, max activity events: 2097152
+2025-12-13 16:47:44.848492: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:136] Profiler session tear down.
+2025-12-13 16:47:44.951926: I external/local_xla/xla/tsl/profiler/rpc/client/save_profile.cc:150] Collecting XSpace to repository: /home/gomine/projects/custom-regularizer/logs/l2_reg_20251213-164709/train/plugi
+ns/profile/2025_12_13_16_47_44/DESKTOP-U3KFGAU.xplane.pb
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 939ms/step - accuracy: 0.3400 - loss: 2.5189
+Epoch 1: val_accuracy improved from None to 0.10030, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 112s 1s/step - accuracy: 0.4362 - loss: 2.0576 - val_accuracy: 0.1003 - val_loss: 5.1013 - learning_rate: 0.0010
+Epoch 2/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 869ms/step - accuracy: 0.5801 - loss: 1.6007
+Epoch 2: val_accuracy improved from 0.10030 to 0.15270, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 925ms/step - accuracy: 0.6005 - loss: 1.5323 - val_accuracy: 0.1527 - val_loss: 3.4348 - learning_rate: 0.0010
+Epoch 3/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 841ms/step - accuracy: 0.6740 - loss: 1.3208
+Epoch 3: val_accuracy improved from 0.15270 to 0.42150, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 896ms/step - accuracy: 0.6881 - loss: 1.2740 - val_accuracy: 0.4215 - val_loss: 2.0447 - learning_rate: 0.0010
+Epoch 4/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 854ms/step - accuracy: 0.7393 - loss: 1.1208
+Epoch 4: val_accuracy improved from 0.42150 to 0.55940, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 909ms/step - accuracy: 0.7436 - loss: 1.1013 - val_accuracy: 0.5594 - val_loss: 1.6628 - learning_rate: 0.0010
+Epoch 5/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 871ms/step - accuracy: 0.7658 - loss: 1.0223
+Epoch 5: val_accuracy improved from 0.55940 to 0.74630, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 926ms/step - accuracy: 0.7730 - loss: 0.9980 - val_accuracy: 0.7463 - val_loss: 1.0882 - learning_rate: 0.0010
+Epoch 6/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 881ms/step - accuracy: 0.7878 - loss: 0.9367
+Epoch 6: val_accuracy did not improve from 0.74630
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 925ms/step - accuracy: 0.7920 - loss: 0.9230 - val_accuracy: 0.6935 - val_loss: 1.3998 - learning_rate: 0.0010
+Epoch 7/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 867ms/step - accuracy: 0.8080 - loss: 0.8640
+Epoch 7: val_accuracy did not improve from 0.74630
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 912ms/step - accuracy: 0.8099 - loss: 0.8568 - val_accuracy: 0.6738 - val_loss: 1.3213 - learning_rate: 0.0010
+Epoch 8/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 881ms/step - accuracy: 0.8238 - loss: 0.8049
+Epoch 8: val_accuracy did not improve from 0.74630
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 918ms/step - accuracy: 0.8244 - loss: 0.8008 - val_accuracy: 0.7199 - val_loss: 1.2345 - learning_rate: 0.0010
+Epoch 9/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 854ms/step - accuracy: 0.8417 - loss: 0.7485
+Epoch 9: val_accuracy did not improve from 0.74630
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 896ms/step - accuracy: 0.8398 - loss: 0.7507 - val_accuracy: 0.6676 - val_loss: 1.3218 - learning_rate: 0.0010
+Epoch 10/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 878ms/step - accuracy: 0.8481 - loss: 0.7165
+Epoch 10: val_accuracy improved from 0.74630 to 0.75140, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+
+Epoch 10: ReduceLROnPlateau reducing learning rate to 0.0005000000237487257.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 938ms/step - accuracy: 0.8481 - loss: 0.7134 - val_accuracy: 0.7514 - val_loss: 1.0882 - learning_rate: 0.0010
+Epoch 11/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 866ms/step - accuracy: 0.8718 - loss: 0.6378
+Epoch 11: val_accuracy improved from 0.75140 to 0.83680, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 921ms/step - accuracy: 0.8791 - loss: 0.6181 - val_accuracy: 0.8368 - val_loss: 0.7389 - learning_rate: 5.0000e-04
+Epoch 12/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 867ms/step - accuracy: 0.8862 - loss: 0.5874
+Epoch 12: val_accuracy did not improve from 0.83680
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 911ms/step - accuracy: 0.8853 - loss: 0.5866 - val_accuracy: 0.8260 - val_loss: 0.7729 - learning_rate: 5.0000e-04
+Epoch 13/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 869ms/step - accuracy: 0.8904 - loss: 0.5647
+Epoch 13: val_accuracy did not improve from 0.83680
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 914ms/step - accuracy: 0.8906 - loss: 0.5635 - val_accuracy: 0.7848 - val_loss: 0.9670 - learning_rate: 5.0000e-04
+Epoch 14/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 877ms/step - accuracy: 0.8975 - loss: 0.5402
+Epoch 14: val_accuracy did not improve from 0.83680
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 922ms/step - accuracy: 0.8943 - loss: 0.5461 - val_accuracy: 0.8045 - val_loss: 0.8583 - learning_rate: 5.0000e-04
+Epoch 15/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 845ms/step - accuracy: 0.9017 - loss: 0.5262
+Epoch 15: val_accuracy did not improve from 0.83680
+98/98 ━━━━━━━━━━━━━━━━━━━━ 87s 889ms/step - accuracy: 0.8997 - loss: 0.5274 - val_accuracy: 0.8247 - val_loss: 0.7702 - learning_rate: 5.0000e-04
+Epoch 16/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 884ms/step - accuracy: 0.9037 - loss: 0.5102
+Epoch 16: val_accuracy did not improve from 0.83680
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 929ms/step - accuracy: 0.9018 - loss: 0.5166 - val_accuracy: 0.8343 - val_loss: 0.7203 - learning_rate: 5.0000e-04
+Epoch 17/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 869ms/step - accuracy: 0.9016 - loss: 0.5073
+Epoch 17: val_accuracy did not improve from 0.83680
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 898ms/step - accuracy: 0.9030 - loss: 0.5063 - val_accuracy: 0.8343 - val_loss: 0.7414 - learning_rate: 5.0000e-04
+Epoch 18/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 887ms/step - accuracy: 0.9043 - loss: 0.5003
+Epoch 18: val_accuracy improved from 0.83680 to 0.84690, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 925ms/step - accuracy: 0.9061 - loss: 0.4960 - val_accuracy: 0.8469 - val_loss: 0.7119 - learning_rate: 5.0000e-04
+Epoch 19/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 899ms/step - accuracy: 0.9113 - loss: 0.4795
+Epoch 19: val_accuracy improved from 0.84690 to 0.86450, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 934ms/step - accuracy: 0.9106 - loss: 0.4796 - val_accuracy: 0.8645 - val_loss: 0.6483 - learning_rate: 5.0000e-04
+Epoch 20/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 898ms/step - accuracy: 0.9118 - loss: 0.4761
+Epoch 20: val_accuracy did not improve from 0.86450
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 924ms/step - accuracy: 0.9102 - loss: 0.4779 - val_accuracy: 0.8469 - val_loss: 0.7172 - learning_rate: 5.0000e-04
+Epoch 21/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 870ms/step - accuracy: 0.9140 - loss: 0.4637
+Epoch 21: val_accuracy did not improve from 0.86450
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 914ms/step - accuracy: 0.9140 - loss: 0.4637 - val_accuracy: 0.7948 - val_loss: 0.9235 - learning_rate: 5.0000e-04
+Epoch 22/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 866ms/step - accuracy: 0.9172 - loss: 0.4521
+Epoch 22: val_accuracy did not improve from 0.86450
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 910ms/step - accuracy: 0.9180 - loss: 0.4501 - val_accuracy: 0.8476 - val_loss: 0.6963 - learning_rate: 5.0000e-04
+Epoch 23/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 848ms/step - accuracy: 0.9209 - loss: 0.4449
+Epoch 23: val_accuracy did not improve from 0.86450
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 890ms/step - accuracy: 0.9190 - loss: 0.4479 - val_accuracy: 0.8027 - val_loss: 0.9151 - learning_rate: 5.0000e-04
+Epoch 24/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 892ms/step - accuracy: 0.9240 - loss: 0.4379
+Epoch 24: val_accuracy did not improve from 0.86450
+
+Epoch 24: ReduceLROnPlateau reducing learning rate to 0.0002500000118743628.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 935ms/step - accuracy: 0.9232 - loss: 0.4354 - val_accuracy: 0.7651 - val_loss: 1.0913 - learning_rate: 5.0000e-04
+Epoch 25/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 878ms/step - accuracy: 0.9390 - loss: 0.3852
+Epoch 25: val_accuracy improved from 0.86450 to 0.88520, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 934ms/step - accuracy: 0.9437 - loss: 0.3731 - val_accuracy: 0.8852 - val_loss: 0.5776 - learning_rate: 2.5000e-04
+Epoch 26/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 851ms/step - accuracy: 0.9524 - loss: 0.3500
+Epoch 26: val_accuracy did not improve from 0.88520
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 897ms/step - accuracy: 0.9504 - loss: 0.3525 - val_accuracy: 0.8736 - val_loss: 0.6207 - learning_rate: 2.5000e-04
+Epoch 27/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 842ms/step - accuracy: 0.9507 - loss: 0.3443
+Epoch 27: val_accuracy did not improve from 0.88520
+98/98 ━━━━━━━━━━━━━━━━━━━━ 87s 888ms/step - accuracy: 0.9507 - loss: 0.3469 - val_accuracy: 0.8747 - val_loss: 0.6134 - learning_rate: 2.5000e-04
+Epoch 28/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 872ms/step - accuracy: 0.9543 - loss: 0.3343
+Epoch 28: val_accuracy did not improve from 0.88520
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 916ms/step - accuracy: 0.9539 - loss: 0.3351 - val_accuracy: 0.8846 - val_loss: 0.5545 - learning_rate: 2.5000e-04
+Epoch 29/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 106s/step - accuracy: 0.9548 - loss: 0.3288
+Epoch 29: val_accuracy did not improve from 0.88520
+98/98 ━━━━━━━━━━━━━━━━━━━━ 10242s 106s/step - accuracy: 0.9552 - loss: 0.3286 - val_accuracy: 0.8702 - val_loss: 0.6675 - learning_rate: 2.5000e-04
+Epoch 30/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 901ms/step - accuracy: 0.9569 - loss: 0.3230
+Epoch 30: val_accuracy did not improve from 0.88520
+98/98 ━━━━━━━━━━━━━━━━━━━━ 95s 966ms/step - accuracy: 0.9564 - loss: 0.3240 - val_accuracy: 0.8691 - val_loss: 0.6612 - learning_rate: 2.5000e-04
+Epoch 31/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 4s/step - accuracy: 0.9544 - loss: 0.3247
+Epoch 31: val_accuracy did not improve from 0.88520
+98/98 ━━━━━━━━━━━━━━━━━━━━ 356s 4s/step - accuracy: 0.9547 - loss: 0.3226 - val_accuracy: 0.8676 - val_loss: 0.6537 - learning_rate: 2.5000e-04
+Epoch 32/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 4s/step - accuracy: 0.9600 - loss: 0.3096
+Epoch 32: val_accuracy did not improve from 0.88520
+98/98 ━━━━━━━━━━━━━━━━━━━━ 387s 4s/step - accuracy: 0.9579 - loss: 0.3125 - val_accuracy: 0.8598 - val_loss: 0.7154 - learning_rate: 2.5000e-04
+Epoch 33/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.9581 - loss: 0.3129
+Epoch 33: val_accuracy did not improve from 0.88520
+
+Epoch 33: ReduceLROnPlateau reducing learning rate to 0.0001250000059371814.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 110s 1s/step - accuracy: 0.9582 - loss: 0.3112 - val_accuracy: 0.8463 - val_loss: 0.7648 - learning_rate: 2.5000e-04
+Epoch 34/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 898ms/step - accuracy: 0.9685 - loss: 0.2860
+Epoch 34: val_accuracy improved from 0.88520 to 0.90160, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 959ms/step - accuracy: 0.9709 - loss: 0.2760 - val_accuracy: 0.9016 - val_loss: 0.5193 - learning_rate: 1.2500e-04
+Epoch 35/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 987ms/step - accuracy: 0.9734 - loss: 0.2620
+Epoch 35: val_accuracy improved from 0.90160 to 0.90630, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 104s 1s/step - accuracy: 0.9756 - loss: 0.2587 - val_accuracy: 0.9063 - val_loss: 0.5129 - learning_rate: 1.2500e-04
+Epoch 36/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.9751 - loss: 0.2594
+Epoch 36: val_accuracy did not improve from 0.90630
+98/98 ━━━━━━━━━━━━━━━━━━━━ 118s 1s/step - accuracy: 0.9753 - loss: 0.2573 - val_accuracy: 0.8920 - val_loss: 0.5864 - learning_rate: 1.2500e-04
+Epoch 37/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.9763 - loss: 0.2547
+Epoch 37: val_accuracy did not improve from 0.90630
+98/98 ━━━━━━━━━━━━━━━━━━━━ 117s 1s/step - accuracy: 0.9763 - loss: 0.2535 - val_accuracy: 0.8905 - val_loss: 0.5981 - learning_rate: 1.2500e-04
+Epoch 38/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.9773 - loss: 0.2467
+Epoch 38: val_accuracy did not improve from 0.90630
+98/98 ━━━━━━━━━━━━━━━━━━━━ 123s 1s/step - accuracy: 0.9764 - loss: 0.2483 - val_accuracy: 0.9055 - val_loss: 0.5266 - learning_rate: 1.2500e-04
+Epoch 39/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.9792 - loss: 0.2439
+Epoch 39: val_accuracy did not improve from 0.90630
+98/98 ━━━━━━━━━━━━━━━━━━━━ 115s 1s/step - accuracy: 0.9780 - loss: 0.2451 - val_accuracy: 0.8981 - val_loss: 0.5679 - learning_rate: 1.2500e-04
+Epoch 40/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.9775 - loss: 0.2419
+Epoch 40: val_accuracy did not improve from 0.90630
+
+Epoch 40: ReduceLROnPlateau reducing learning rate to 6.25000029685907e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 111s 1s/step - accuracy: 0.9773 - loss: 0.2434 - val_accuracy: 0.8941 - val_loss: 0.5846 - learning_rate: 1.2500e-04
+Epoch 41/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 933ms/step - accuracy: 0.9833 - loss: 0.2302
+Epoch 41: val_accuracy improved from 0.90630 to 0.91410, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 100s 1s/step - accuracy: 0.9839 - loss: 0.2272 - val_accuracy: 0.9141 - val_loss: 0.4963 - learning_rate: 6.2500e-05
+Epoch 42/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.9843 - loss: 0.2236
+Epoch 42: val_accuracy did not improve from 0.91410
+98/98 ━━━━━━━━━━━━━━━━━━━━ 111s 1s/step - accuracy: 0.9846 - loss: 0.2223 - val_accuracy: 0.9117 - val_loss: 0.5292 - learning_rate: 6.2500e-05
+Epoch 43/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.9862 - loss: 0.2186
+Epoch 43: val_accuracy improved from 0.91410 to 0.91450, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 127s 1s/step - accuracy: 0.9865 - loss: 0.2172 - val_accuracy: 0.9145 - val_loss: 0.5191 - learning_rate: 6.2500e-05
+Epoch 44/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 969ms/step - accuracy: 0.9874 - loss: 0.2153
+Epoch 44: val_accuracy did not improve from 0.91450
+98/98 ━━━━━━━━━━━━━━━━━━━━ 102s 1s/step - accuracy: 0.9872 - loss: 0.2145 - val_accuracy: 0.9107 - val_loss: 0.5447 - learning_rate: 6.2500e-05
+Epoch 45/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 988ms/step - accuracy: 0.9869 - loss: 0.2126
+Epoch 45: val_accuracy did not improve from 0.91450
+98/98 ━━━━━━━━━━━━━━━━━━━━ 99s 1s/step - accuracy: 0.9867 - loss: 0.2130 - val_accuracy: 0.9140 - val_loss: 0.5337 - learning_rate: 6.2500e-05
+Epoch 46/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 997ms/step - accuracy: 0.9862 - loss: 0.2139
+Epoch 46: val_accuracy did not improve from 0.91450
+
+Epoch 46: ReduceLROnPlateau reducing learning rate to 3.125000148429535e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 103s 1s/step - accuracy: 0.9868 - loss: 0.2121 - val_accuracy: 0.9049 - val_loss: 0.5809 - learning_rate: 6.2500e-05
+Epoch 47/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 901ms/step - accuracy: 0.9903 - loss: 0.2033
+Epoch 47: val_accuracy improved from 0.91450 to 0.91710, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 972ms/step - accuracy: 0.9897 - loss: 0.2036 - val_accuracy: 0.9171 - val_loss: 0.5154 - learning_rate: 3.1250e-05
+Epoch 48/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 944ms/step - accuracy: 0.9897 - loss: 0.2026
+Epoch 48: val_accuracy improved from 0.91710 to 0.92190, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 100s 1s/step - accuracy: 0.9900 - loss: 0.2015 - val_accuracy: 0.9219 - val_loss: 0.5071 - learning_rate: 3.1250e-05
+Epoch 49/100
+96/98 ━━━━━━━━━━━━━━━━━━━━ 1s 979ms/step - accuracy: 0.9905 - loss: 0.2022
+Epoch 49: val_accuracy did not improve from 0.92190
+98/98 ━━━━━━━━━━━━━━━━━━━━ 99s 1s/step - accuracy: 0.9908 - loss: 0.1998 - val_accuracy: 0.9125 - val_loss: 0.5679 - learning_rate: 3.1250e-05
+Epoch 50/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 891ms/step - accuracy: 0.9908 - loss: 0.1984
+Epoch 50: val_accuracy did not improve from 0.92190
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 937ms/step - accuracy: 0.9909 - loss: 0.1980 - val_accuracy: 0.9172 - val_loss: 0.5384 - learning_rate: 3.1250e-05
+Epoch 51/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 863ms/step - accuracy: 0.9907 - loss: 0.1981
+Epoch 51: val_accuracy did not improve from 0.92190
+
+Epoch 51: ReduceLROnPlateau reducing learning rate to 1.5625000742147677e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 916ms/step - accuracy: 0.9913 - loss: 0.1964 - val_accuracy: 0.9210 - val_loss: 0.5311 - learning_rate: 3.1250e-05
+Epoch 52/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 901ms/step - accuracy: 0.9922 - loss: 0.1950
+Epoch 52: val_accuracy did not improve from 0.92190
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 952ms/step - accuracy: 0.9923 - loss: 0.1944 - val_accuracy: 0.9212 - val_loss: 0.5223 - learning_rate: 1.5625e-05
+Epoch 53/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 910ms/step - accuracy: 0.9930 - loss: 0.1925
+Epoch 53: val_accuracy did not improve from 0.92190
+98/98 ━━━━━━━━━━━━━━━━━━━━ 95s 963ms/step - accuracy: 0.9924 - loss: 0.1927 - val_accuracy: 0.9203 - val_loss: 0.5332 - learning_rate: 1.5625e-05
+Epoch 54/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 885ms/step - accuracy: 0.9935 - loss: 0.1905
+Epoch 54: val_accuracy did not improve from 0.92190
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 935ms/step - accuracy: 0.9932 - loss: 0.1910 - val_accuracy: 0.9213 - val_loss: 0.5457 - learning_rate: 1.5625e-05
+Epoch 55/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 905ms/step - accuracy: 0.9933 - loss: 0.1907
+Epoch 55: val_accuracy improved from 0.92190 to 0.92230, saving model to /home/gomine/projects/custom-regularizer/checkpoints/l2_reg_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 950ms/step - accuracy: 0.9932 - loss: 0.1906 - val_accuracy: 0.9223 - val_loss: 0.5402 - learning_rate: 1.5625e-05
+Epoch 56/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 906ms/step - accuracy: 0.9928 - loss: 0.1903
+Epoch 56: val_accuracy did not improve from 0.92230
+
+Epoch 56: ReduceLROnPlateau reducing learning rate to 7.812500371073838e-06.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 934ms/step - accuracy: 0.9928 - loss: 0.1904 - val_accuracy: 0.9217 - val_loss: 0.5423 - learning_rate: 1.5625e-05
+Epoch 56: early stopping
+Restoring model weights from the end of the best epoch: 41.
+2025-12-13 21:15:35.034277: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:103] Profiler session initializing.
+2025-12-13 21:15:35.035463: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:118] Profiler session started.
+2025-12-13 21:15:35.400627: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:136] Profiler session tear down.
+I0000 00:00:1765653335.401434   39649 cupti_tracer.cc:1381] CUPTI activity buffer flushed
+TensorBoard logs will be saved to: /home/gomine/projects/custom-regularizer/logs/group_l1_20251213-211535
+
+Training group_l1...
+======================================================================
+Epoch 1/100
+ 9/98 ━━━━━━━━━━━━━━━━━━━━ 1:05 733ms/step - accuracy: 0.1556 - loss: 7.85422025-12-13 21:15:55.952902: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:103] Profiler session initializing.
+2025-12-13 21:15:55.952942: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:118] Profiler session started.
+19/98 ━━━━━━━━━━━━━━━━━━━━ 1:13 929ms/step - accuracy: 0.1980 - loss: 7.47042025-12-13 21:16:08.142760: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:68] Profiler session collecting data.
+I0000 00:00:1765653368.324105   39649 cupti_tracer.cc:1381] CUPTI activity buffer flushed
+I0000 00:00:1765653370.148124   39649 cupti_collector.cc:841]  GpuTracer has collected 102435 callback api events and 103253 activity events.
+I0000 00:00:1765653370.148463   39649 cupti_collector.cc:844]  GpuTracer max callback_events: 2097152, max activity events: 2097152
+2025-12-13 21:16:12.844106: I external/local_tsl/tsl/profiler/lib/profiler_session.cc:136] Profiler session tear down.
+2025-12-13 21:16:12.848356: I external/local_xla/xla/tsl/profiler/rpc/client/save_profile.cc:150] Collecting XSpace to repository: /home/gomine/projects/custom-regularizer/logs/group_l1_20251213-211535/train/plu
+gins/profile/2025_12_13_21_16_12/DESKTOP-U3KFGAU.xplane.pb
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 982ms/step - accuracy: 0.3375 - loss: 6.5519
+Epoch 1: val_accuracy improved from None to 0.10000, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 118s 1s/step - accuracy: 0.4319 - loss: 6.0042 - val_accuracy: 0.1000 - val_loss: 8.0775 - learning_rate: 0.0010
+Epoch 2/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 919ms/step - accuracy: 0.5806 - loss: 5.0585
+Epoch 2: val_accuracy improved from 0.10000 to 0.13290, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 98s 993ms/step - accuracy: 0.5999 - loss: 4.8094 - val_accuracy: 0.1329 - val_loss: 6.1252 - learning_rate: 0.0010
+Epoch 3/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 942ms/step - accuracy: 0.6641 - loss: 4.0370
+Epoch 3: val_accuracy improved from 0.13290 to 0.32260, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 101s 1s/step - accuracy: 0.6712 - loss: 3.8288 - val_accuracy: 0.3226 - val_loss: 4.6986 - learning_rate: 0.0010
+Epoch 4/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 974ms/step - accuracy: 0.7139 - loss: 3.1904
+Epoch 4: val_accuracy improved from 0.32260 to 0.54920, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 102s 1s/step - accuracy: 0.7170 - loss: 3.0437 - val_accuracy: 0.5492 - val_loss: 3.3082 - learning_rate: 0.0010
+Epoch 5/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 933ms/step - accuracy: 0.7349 - loss: 2.6519
+Epoch 5: val_accuracy did not improve from 0.54920
+98/98 ━━━━━━━━━━━━━━━━━━━━ 97s 989ms/step - accuracy: 0.7419 - loss: 2.5535 - val_accuracy: 0.4399 - val_loss: 3.6161 - learning_rate: 0.0010
+Epoch 6/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 903ms/step - accuracy: 0.7637 - loss: 2.2867
+Epoch 6: val_accuracy did not improve from 0.54920
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 956ms/step - accuracy: 0.7638 - loss: 2.2329 - val_accuracy: 0.4926 - val_loss: 3.1724 - learning_rate: 0.0010
+Epoch 7/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 864ms/step - accuracy: 0.7736 - loss: 2.0704
+Epoch 7: val_accuracy improved from 0.54920 to 0.60770, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 928ms/step - accuracy: 0.7747 - loss: 2.0254 - val_accuracy: 0.6077 - val_loss: 2.5544 - learning_rate: 0.0010
+Epoch 8/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 921ms/step - accuracy: 0.7809 - loss: 1.9116
+Epoch 8: val_accuracy did not improve from 0.60770
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 976ms/step - accuracy: 0.7864 - loss: 1.8643 - val_accuracy: 0.4540 - val_loss: 3.1187 - learning_rate: 0.0010
+Epoch 9/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 960ms/step - accuracy: 0.7931 - loss: 1.7672
+Epoch 9: val_accuracy did not improve from 0.60770
+98/98 ━━━━━━━━━━━━━━━━━━━━ 100s 1s/step - accuracy: 0.7939 - loss: 1.7434 - val_accuracy: 0.4031 - val_loss: 3.3517 - learning_rate: 0.0010
+Epoch 10/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 921ms/step - accuracy: 0.7930 - loss: 1.7053
+Epoch 10: val_accuracy did not improve from 0.60770
+98/98 ━━━━━━━━━━━━━━━━━━━━ 95s 966ms/step - accuracy: 0.8021 - loss: 1.6655 - val_accuracy: 0.5907 - val_loss: 2.3868 - learning_rate: 0.0010
+Epoch 11/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 964ms/step - accuracy: 0.8084 - loss: 1.6039
+Epoch 11: val_accuracy improved from 0.60770 to 0.70060, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 102s 1s/step - accuracy: 0.8105 - loss: 1.5940 - val_accuracy: 0.7006 - val_loss: 1.8813 - learning_rate: 0.0010
+Epoch 12/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 901ms/step - accuracy: 0.8152 - loss: 1.5553
+Epoch 12: val_accuracy did not improve from 0.70060
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 957ms/step - accuracy: 0.8163 - loss: 1.5492 - val_accuracy: 0.5513 - val_loss: 2.6064 - learning_rate: 0.0010
+Epoch 13/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 916ms/step - accuracy: 0.8169 - loss: 1.5296
+Epoch 13: val_accuracy did not improve from 0.70060
+98/98 ━━━━━━━━━━━━━━━━━━━━ 95s 965ms/step - accuracy: 0.8204 - loss: 1.5116 - val_accuracy: 0.4683 - val_loss: 3.3948 - learning_rate: 0.0010
+Epoch 14/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 932ms/step - accuracy: 0.8267 - loss: 1.4689
+Epoch 14: val_accuracy did not improve from 0.70060
+98/98 ━━━━━━━━━━━━━━━━━━━━ 97s 985ms/step - accuracy: 0.8251 - loss: 1.4717 - val_accuracy: 0.6034 - val_loss: 2.2380 - learning_rate: 0.0010
+Epoch 15/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 878ms/step - accuracy: 0.8303 - loss: 1.4364
+Epoch 15: val_accuracy did not improve from 0.70060
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 925ms/step - accuracy: 0.8292 - loss: 1.4396 - val_accuracy: 0.6234 - val_loss: 2.2002 - learning_rate: 0.0010
+Epoch 16/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 868ms/step - accuracy: 0.8332 - loss: 1.4180
+Epoch 16: val_accuracy improved from 0.70060 to 0.70260, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+
+Epoch 16: ReduceLROnPlateau reducing learning rate to 0.0005000000237487257.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 930ms/step - accuracy: 0.8366 - loss: 1.4088 - val_accuracy: 0.7026 - val_loss: 1.9013 - learning_rate: 0.0010
+Epoch 17/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 884ms/step - accuracy: 0.8634 - loss: 1.2777
+Epoch 17: val_accuracy improved from 0.70260 to 0.78410, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 942ms/step - accuracy: 0.8698 - loss: 1.2299 - val_accuracy: 0.7841 - val_loss: 1.4779 - learning_rate: 5.0000e-04
+Epoch 18/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 898ms/step - accuracy: 0.8713 - loss: 1.1775
+Epoch 18: val_accuracy did not improve from 0.78410
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 945ms/step - accuracy: 0.8734 - loss: 1.1685 - val_accuracy: 0.7665 - val_loss: 1.4498 - learning_rate: 5.0000e-04
+Epoch 19/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 880ms/step - accuracy: 0.8763 - loss: 1.1461
+Epoch 19: val_accuracy improved from 0.78410 to 0.79730, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 939ms/step - accuracy: 0.8751 - loss: 1.1458 - val_accuracy: 0.7973 - val_loss: 1.3779 - learning_rate: 5.0000e-04
+Epoch 20/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 873ms/step - accuracy: 0.8761 - loss: 1.1337
+Epoch 20: val_accuracy did not improve from 0.79730
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 923ms/step - accuracy: 0.8770 - loss: 1.1269 - val_accuracy: 0.7584 - val_loss: 1.4848 - learning_rate: 5.0000e-04
+Epoch 21/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 842ms/step - accuracy: 0.8793 - loss: 1.1064
+Epoch 21: val_accuracy did not improve from 0.79730
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 898ms/step - accuracy: 0.8794 - loss: 1.1038 - val_accuracy: 0.6921 - val_loss: 1.7345 - learning_rate: 5.0000e-04
+Epoch 22/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 841ms/step - accuracy: 0.8799 - loss: 1.0998
+Epoch 22: val_accuracy improved from 0.79730 to 0.81750, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 903ms/step - accuracy: 0.8795 - loss: 1.0932 - val_accuracy: 0.8175 - val_loss: 1.2783 - learning_rate: 5.0000e-04
+Epoch 23/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 909ms/step - accuracy: 0.8824 - loss: 1.0746
+Epoch 23: val_accuracy did not improve from 0.81750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 944ms/step - accuracy: 0.8824 - loss: 1.0756 - val_accuracy: 0.6726 - val_loss: 1.8857 - learning_rate: 5.0000e-04
+Epoch 24/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 916ms/step - accuracy: 0.8824 - loss: 1.0710
+Epoch 24: val_accuracy did not improve from 0.81750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 947ms/step - accuracy: 0.8833 - loss: 1.0632 - val_accuracy: 0.7934 - val_loss: 1.3337 - learning_rate: 5.0000e-04
+Epoch 25/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 917ms/step - accuracy: 0.8877 - loss: 1.0506
+Epoch 25: val_accuracy did not improve from 0.81750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 972ms/step - accuracy: 0.8862 - loss: 1.0516 - val_accuracy: 0.7176 - val_loss: 1.5618 - learning_rate: 5.0000e-04
+Epoch 26/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 886ms/step - accuracy: 0.8861 - loss: 1.0487
+Epoch 26: val_accuracy did not improve from 0.81750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 936ms/step - accuracy: 0.8846 - loss: 1.0472 - val_accuracy: 0.8154 - val_loss: 1.2611 - learning_rate: 5.0000e-04
+Epoch 27/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 900ms/step - accuracy: 0.8897 - loss: 1.0285
+Epoch 27: val_accuracy did not improve from 0.81750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 948ms/step - accuracy: 0.8903 - loss: 1.0258 - val_accuracy: 0.7466 - val_loss: 1.5028 - learning_rate: 5.0000e-04
+Epoch 28/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 910ms/step - accuracy: 0.8913 - loss: 1.0148
+Epoch 28: val_accuracy did not improve from 0.81750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 89s 939ms/step - accuracy: 0.8895 - loss: 1.0177 - val_accuracy: 0.7402 - val_loss: 1.5837 - learning_rate: 5.0000e-04
+Epoch 29/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 911ms/step - accuracy: 0.8963 - loss: 1.0102
+Epoch 29: val_accuracy did not improve from 0.81750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 95s 968ms/step - accuracy: 0.8932 - loss: 1.0174 - val_accuracy: 0.8112 - val_loss: 1.3079 - learning_rate: 5.0000e-04
+Epoch 30/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 874ms/step - accuracy: 0.8940 - loss: 1.0110
+Epoch 30: val_accuracy did not improve from 0.81750
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 929ms/step - accuracy: 0.8934 - loss: 1.0087 - val_accuracy: 0.6789 - val_loss: 1.8229 - learning_rate: 5.0000e-04
+Epoch 31/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 922ms/step - accuracy: 0.8984 - loss: 0.9910
+Epoch 31: val_accuracy did not improve from 0.81750
+
+Epoch 31: ReduceLROnPlateau reducing learning rate to 0.0002500000118743628.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 971ms/step - accuracy: 0.8973 - loss: 0.9881 - val_accuracy: 0.7889 - val_loss: 1.3430 - learning_rate: 5.0000e-04
+Epoch 32/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 852ms/step - accuracy: 0.9159 - loss: 0.9031
+Epoch 32: val_accuracy improved from 0.81750 to 0.88210, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 916ms/step - accuracy: 0.9190 - loss: 0.8766 - val_accuracy: 0.8821 - val_loss: 0.9734 - learning_rate: 2.5000e-04
+Epoch 33/100
+96/98 ━━━━━━━━━━━━━━━━━━━━ 1s 914ms/step - accuracy: 0.9266 - loss: 0.8293
+Epoch 33: val_accuracy did not improve from 0.88210
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 936ms/step - accuracy: 0.9253 - loss: 0.8322 - val_accuracy: 0.8572 - val_loss: 1.0290 - learning_rate: 2.5000e-04
+Epoch 34/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 890ms/step - accuracy: 0.9294 - loss: 0.8123
+Epoch 34: val_accuracy did not improve from 0.88210
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 950ms/step - accuracy: 0.9271 - loss: 0.8147 - val_accuracy: 0.8655 - val_loss: 1.0022 - learning_rate: 2.5000e-04
+Epoch 35/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 894ms/step - accuracy: 0.9306 - loss: 0.8007
+Epoch 35: val_accuracy did not improve from 0.88210
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 957ms/step - accuracy: 0.9291 - loss: 0.8000 - val_accuracy: 0.7415 - val_loss: 1.5349 - learning_rate: 2.5000e-04
+Epoch 36/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 884ms/step - accuracy: 0.9274 - loss: 0.8009
+Epoch 36: val_accuracy did not improve from 0.88210
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 932ms/step - accuracy: 0.9283 - loss: 0.7953 - val_accuracy: 0.8497 - val_loss: 1.0398 - learning_rate: 2.5000e-04
+Epoch 37/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 864ms/step - accuracy: 0.9290 - loss: 0.7819
+Epoch 37: val_accuracy did not improve from 0.88210
+
+Epoch 37: ReduceLROnPlateau reducing learning rate to 0.0001250000059371814.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 912ms/step - accuracy: 0.9279 - loss: 0.7877 - val_accuracy: 0.8573 - val_loss: 1.0247 - learning_rate: 2.5000e-04
+Epoch 38/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 876ms/step - accuracy: 0.9399 - loss: 0.7371
+Epoch 38: val_accuracy improved from 0.88210 to 0.88750, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 95s 963ms/step - accuracy: 0.9446 - loss: 0.7134 - val_accuracy: 0.8875 - val_loss: 0.8787 - learning_rate: 1.2500e-04
+Epoch 39/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 868ms/step - accuracy: 0.9505 - loss: 0.6812
+Epoch 39: val_accuracy improved from 0.88750 to 0.89300, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 930ms/step - accuracy: 0.9511 - loss: 0.6770 - val_accuracy: 0.8930 - val_loss: 0.8399 - learning_rate: 1.2500e-04
+Epoch 40/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 845ms/step - accuracy: 0.9527 - loss: 0.6638
+Epoch 40: val_accuracy did not improve from 0.89300
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 911ms/step - accuracy: 0.9512 - loss: 0.6672 - val_accuracy: 0.8895 - val_loss: 0.8519 - learning_rate: 1.2500e-04
+Epoch 41/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 892ms/step - accuracy: 0.9535 - loss: 0.6584
+Epoch 41: val_accuracy did not improve from 0.89300
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 955ms/step - accuracy: 0.9525 - loss: 0.6583 - val_accuracy: 0.8739 - val_loss: 0.9154 - learning_rate: 1.2500e-04
+Epoch 42/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 902ms/step - accuracy: 0.9536 - loss: 0.6488
+Epoch 42: val_accuracy did not improve from 0.89300
+98/98 ━━━━━━━━━━━━━━━━━━━━ 88s 925ms/step - accuracy: 0.9535 - loss: 0.6459 - val_accuracy: 0.8670 - val_loss: 0.9414 - learning_rate: 1.2500e-04
+Epoch 43/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 907ms/step - accuracy: 0.9555 - loss: 0.6355
+Epoch 43: val_accuracy did not improve from 0.89300
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 929ms/step - accuracy: 0.9548 - loss: 0.6379 - val_accuracy: 0.8835 - val_loss: 0.8691 - learning_rate: 1.2500e-04
+Epoch 44/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 893ms/step - accuracy: 0.9565 - loss: 0.6273
+Epoch 44: val_accuracy did not improve from 0.89300
+
+Epoch 44: ReduceLROnPlateau reducing learning rate to 6.25000029685907e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 915ms/step - accuracy: 0.9561 - loss: 0.6287 - val_accuracy: 0.8896 - val_loss: 0.8643 - learning_rate: 1.2500e-04
+Epoch 45/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 978ms/step - accuracy: 0.9613 - loss: 0.6061
+Epoch 45: val_accuracy improved from 0.89300 to 0.90120, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 105s 1s/step - accuracy: 0.9637 - loss: 0.5922 - val_accuracy: 0.9012 - val_loss: 0.7836 - learning_rate: 6.2500e-05
+Epoch 46/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 927ms/step - accuracy: 0.9676 - loss: 0.5744
+Epoch 46: val_accuracy improved from 0.90120 to 0.90660, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 99s 1s/step - accuracy: 0.9673 - loss: 0.5716 - val_accuracy: 0.9066 - val_loss: 0.7684 - learning_rate: 6.2500e-05
+Epoch 47/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 922ms/step - accuracy: 0.9671 - loss: 0.5648
+Epoch 47: val_accuracy did not improve from 0.90660
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 956ms/step - accuracy: 0.9681 - loss: 0.5632 - val_accuracy: 0.8883 - val_loss: 0.8384 - learning_rate: 6.2500e-05
+Epoch 48/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 927ms/step - accuracy: 0.9687 - loss: 0.5580
+Epoch 48: val_accuracy did not improve from 0.90660
+98/98 ━━━━━━━━━━━━━━━━━━━━ 97s 986ms/step - accuracy: 0.9701 - loss: 0.5536 - val_accuracy: 0.8937 - val_loss: 0.8194 - learning_rate: 6.2500e-05
+Epoch 49/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 915ms/step - accuracy: 0.9708 - loss: 0.5509
+Epoch 49: val_accuracy improved from 0.90660 to 0.91230, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 97s 989ms/step - accuracy: 0.9697 - loss: 0.5517 - val_accuracy: 0.9123 - val_loss: 0.7435 - learning_rate: 6.2500e-05
+Epoch 50/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 921ms/step - accuracy: 0.9720 - loss: 0.5422
+Epoch 50: val_accuracy did not improve from 0.91230
+98/98 ━━━━━━━━━━━━━━━━━━━━ 136s 980ms/step - accuracy: 0.9717 - loss: 0.5431 - val_accuracy: 0.8879 - val_loss: 0.8582 - learning_rate: 6.2500e-05
+Epoch 51/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 873ms/step - accuracy: 0.9728 - loss: 0.5368
+Epoch 51: val_accuracy did not improve from 0.91230
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 932ms/step - accuracy: 0.9721 - loss: 0.5385 - val_accuracy: 0.9109 - val_loss: 0.7536 - learning_rate: 6.2500e-05
+Epoch 52/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 882ms/step - accuracy: 0.9723 - loss: 0.5345
+Epoch 52: val_accuracy did not improve from 0.91230
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 944ms/step - accuracy: 0.9720 - loss: 0.5343 - val_accuracy: 0.8894 - val_loss: 0.8584 - learning_rate: 6.2500e-05
+Epoch 53/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 929ms/step - accuracy: 0.9741 - loss: 0.5277
+Epoch 53: val_accuracy did not improve from 0.91230
+98/98 ━━━━━━━━━━━━━━━━━━━━ 97s 991ms/step - accuracy: 0.9729 - loss: 0.5288 - val_accuracy: 0.9088 - val_loss: 0.7419 - learning_rate: 6.2500e-05
+Epoch 54/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 1s/step - accuracy: 0.9730 - loss: 0.5262
+Epoch 54: val_accuracy did not improve from 0.91230
+98/98 ━━━━━━━━━━━━━━━━━━━━ 115s 1s/step - accuracy: 0.9735 - loss: 0.5263 - val_accuracy: 0.8906 - val_loss: 0.8540 - learning_rate: 6.2500e-05
+Epoch 55/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 975ms/step - accuracy: 0.9732 - loss: 0.5225
+Epoch 55: val_accuracy did not improve from 0.91230
+98/98 ━━━━━━━━━━━━━━━━━━━━ 102s 1s/step - accuracy: 0.9729 - loss: 0.5223 - val_accuracy: 0.9095 - val_loss: 0.7540 - learning_rate: 6.2500e-05
+Epoch 56/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 942ms/step - accuracy: 0.9746 - loss: 0.5185
+Epoch 56: val_accuracy did not improve from 0.91230
+98/98 ━━━━━━━━━━━━━━━━━━━━ 99s 1s/step - accuracy: 0.9746 - loss: 0.5169 - val_accuracy: 0.8808 - val_loss: 0.8829 - learning_rate: 6.2500e-05
+Epoch 57/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 929ms/step - accuracy: 0.9750 - loss: 0.5149
+Epoch 57: val_accuracy did not improve from 0.91230
+98/98 ━━━━━━━━━━━━━━━━━━━━ 99s 1s/step - accuracy: 0.9750 - loss: 0.5149 - val_accuracy: 0.8902 - val_loss: 0.8195 - learning_rate: 6.2500e-05
+Epoch 58/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 877ms/step - accuracy: 0.9745 - loss: 0.5128
+Epoch 58: val_accuracy did not improve from 0.91230
+
+Epoch 58: ReduceLROnPlateau reducing learning rate to 3.125000148429535e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 938ms/step - accuracy: 0.9751 - loss: 0.5114 - val_accuracy: 0.9062 - val_loss: 0.7671 - learning_rate: 6.2500e-05
+Epoch 59/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 887ms/step - accuracy: 0.9783 - loss: 0.4955
+Epoch 59: val_accuracy did not improve from 0.91230
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 946ms/step - accuracy: 0.9794 - loss: 0.4904 - val_accuracy: 0.9026 - val_loss: 0.7681 - learning_rate: 3.1250e-05
+Epoch 60/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 911ms/step - accuracy: 0.9814 - loss: 0.4814
+Epoch 60: val_accuracy did not improve from 0.91230
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 944ms/step - accuracy: 0.9821 - loss: 0.4790 - val_accuracy: 0.9042 - val_loss: 0.7438 - learning_rate: 3.1250e-05
+Epoch 61/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 938ms/step - accuracy: 0.9832 - loss: 0.4767
+Epoch 61: val_accuracy did not improve from 0.91230
+98/98 ━━━━━━━━━━━━━━━━━━━━ 98s 996ms/step - accuracy: 0.9834 - loss: 0.4744 - val_accuracy: 0.9074 - val_loss: 0.7620 - learning_rate: 3.1250e-05
+Epoch 62/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 926ms/step - accuracy: 0.9821 - loss: 0.4772
+Epoch 62: val_accuracy improved from 0.91230 to 0.91380, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 976ms/step - accuracy: 0.9833 - loss: 0.4726 - val_accuracy: 0.9138 - val_loss: 0.7257 - learning_rate: 3.1250e-05
+Epoch 63/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 913ms/step - accuracy: 0.9833 - loss: 0.4703
+Epoch 63: val_accuracy did not improve from 0.91380
+98/98 ━━━━━━━━━━━━━━━━━━━━ 97s 987ms/step - accuracy: 0.9834 - loss: 0.4698 - val_accuracy: 0.9085 - val_loss: 0.7627 - learning_rate: 3.1250e-05
+Epoch 64/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 883ms/step - accuracy: 0.9834 - loss: 0.4699
+Epoch 64: val_accuracy improved from 0.91380 to 0.92050, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 960ms/step - accuracy: 0.9831 - loss: 0.4694 - val_accuracy: 0.9205 - val_loss: 0.7140 - learning_rate: 3.1250e-05
+Epoch 65/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 895ms/step - accuracy: 0.9840 - loss: 0.4675
+Epoch 65: val_accuracy did not improve from 0.92050
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 957ms/step - accuracy: 0.9841 - loss: 0.4676 - val_accuracy: 0.9116 - val_loss: 0.7360 - learning_rate: 3.1250e-05
+Epoch 66/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 922ms/step - accuracy: 0.9847 - loss: 0.4612
+Epoch 66: val_accuracy did not improve from 0.92050
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 979ms/step - accuracy: 0.9846 - loss: 0.4613 - val_accuracy: 0.9169 - val_loss: 0.7029 - learning_rate: 3.1250e-05
+Epoch 67/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 925ms/step - accuracy: 0.9837 - loss: 0.4630
+Epoch 67: val_accuracy did not improve from 0.92050
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 957ms/step - accuracy: 0.9839 - loss: 0.4628 - val_accuracy: 0.9054 - val_loss: 0.7724 - learning_rate: 3.1250e-05
+Epoch 68/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 916ms/step - accuracy: 0.9838 - loss: 0.4615
+Epoch 68: val_accuracy did not improve from 0.92050
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 973ms/step - accuracy: 0.9840 - loss: 0.4601 - val_accuracy: 0.8754 - val_loss: 0.9277 - learning_rate: 3.1250e-05
+Epoch 69/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 911ms/step - accuracy: 0.9848 - loss: 0.4560
+Epoch 69: val_accuracy did not improve from 0.92050
+98/98 ━━━━━━━━━━━━━━━━━━━━ 95s 970ms/step - accuracy: 0.9844 - loss: 0.4563 - val_accuracy: 0.9000 - val_loss: 0.7882 - learning_rate: 3.1250e-05
+Epoch 70/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 912ms/step - accuracy: 0.9853 - loss: 0.4539
+Epoch 70: val_accuracy did not improve from 0.92050
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 974ms/step - accuracy: 0.9854 - loss: 0.4535 - val_accuracy: 0.9048 - val_loss: 0.7782 - learning_rate: 3.1250e-05
+Epoch 71/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 928ms/step - accuracy: 0.9854 - loss: 0.4504
+Epoch 71: val_accuracy did not improve from 0.92050
+
+Epoch 71: ReduceLROnPlateau reducing learning rate to 1.5625000742147677e-05.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 97s 986ms/step - accuracy: 0.9851 - loss: 0.4513 - val_accuracy: 0.8762 - val_loss: 0.9111 - learning_rate: 3.1250e-05
+Epoch 72/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 917ms/step - accuracy: 0.9876 - loss: 0.4448
+Epoch 72: val_accuracy did not improve from 0.92050
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 949ms/step - accuracy: 0.9874 - loss: 0.4433 - val_accuracy: 0.9075 - val_loss: 0.7434 - learning_rate: 1.5625e-05
+Epoch 73/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 922ms/step - accuracy: 0.9896 - loss: 0.4342
+Epoch 73: val_accuracy did not improve from 0.92050
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 980ms/step - accuracy: 0.9889 - loss: 0.4350 - val_accuracy: 0.9138 - val_loss: 0.7465 - learning_rate: 1.5625e-05
+Epoch 74/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 885ms/step - accuracy: 0.9887 - loss: 0.4348
+Epoch 74: val_accuracy did not improve from 0.92050
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 943ms/step - accuracy: 0.9889 - loss: 0.4342 - val_accuracy: 0.9182 - val_loss: 0.7124 - learning_rate: 1.5625e-05
+Epoch 75/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 926ms/step - accuracy: 0.9896 - loss: 0.4294
+Epoch 75: val_accuracy did not improve from 0.92050
+98/98 ━━━━━━━━━━━━━━━━━━━━ 97s 987ms/step - accuracy: 0.9890 - loss: 0.4310 - val_accuracy: 0.9104 - val_loss: 0.7815 - learning_rate: 1.5625e-05
+Epoch 76/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 898ms/step - accuracy: 0.9894 - loss: 0.4317
+Epoch 76: val_accuracy did not improve from 0.92050
+
+Epoch 76: ReduceLROnPlateau reducing learning rate to 7.812500371073838e-06.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 953ms/step - accuracy: 0.9895 - loss: 0.4302 - val_accuracy: 0.9148 - val_loss: 0.7378 - learning_rate: 1.5625e-05
+Epoch 77/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 878ms/step - accuracy: 0.9890 - loss: 0.4305
+Epoch 77: val_accuracy improved from 0.92050 to 0.92370, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 946ms/step - accuracy: 0.9901 - loss: 0.4256 - val_accuracy: 0.9237 - val_loss: 0.6996 - learning_rate: 7.8125e-06
+Epoch 78/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 917ms/step - accuracy: 0.9900 - loss: 0.4219
+Epoch 78: val_accuracy did not improve from 0.92370
+98/98 ━━━━━━━━━━━━━━━━━━━━ 90s 943ms/step - accuracy: 0.9908 - loss: 0.4213 - val_accuracy: 0.9160 - val_loss: 0.7525 - learning_rate: 7.8125e-06
+Epoch 79/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 947ms/step - accuracy: 0.9912 - loss: 0.4186
+Epoch 79: val_accuracy did not improve from 0.92370
+98/98 ━━━━━━━━━━━━━━━━━━━━ 99s 1s/step - accuracy: 0.9910 - loss: 0.4197 - val_accuracy: 0.9220 - val_loss: 0.7280 - learning_rate: 7.8125e-06
+Epoch 80/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 928ms/step - accuracy: 0.9906 - loss: 0.4208
+Epoch 80: val_accuracy did not improve from 0.92370
+98/98 ━━━━━━━━━━━━━━━━━━━━ 97s 982ms/step - accuracy: 0.9909 - loss: 0.4188 - val_accuracy: 0.9216 - val_loss: 0.7208 - learning_rate: 7.8125e-06
+Epoch 81/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 879ms/step - accuracy: 0.9908 - loss: 0.4179
+Epoch 81: val_accuracy did not improve from 0.92370
+98/98 ━━━━━━━━━━━━━━━━━━━━ 92s 932ms/step - accuracy: 0.9914 - loss: 0.4160 - val_accuracy: 0.9180 - val_loss: 0.7419 - learning_rate: 7.8125e-06
+Epoch 82/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 898ms/step - accuracy: 0.9918 - loss: 0.4143
+Epoch 82: val_accuracy did not improve from 0.92370
+
+Epoch 82: ReduceLROnPlateau reducing learning rate to 3.906250185536919e-06.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 951ms/step - accuracy: 0.9917 - loss: 0.4142 - val_accuracy: 0.9216 - val_loss: 0.7231 - learning_rate: 7.8125e-06
+Epoch 83/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 866ms/step - accuracy: 0.9917 - loss: 0.4143
+Epoch 83: val_accuracy did not improve from 0.92370
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 925ms/step - accuracy: 0.9915 - loss: 0.4133 - val_accuracy: 0.9205 - val_loss: 0.7414 - learning_rate: 3.9063e-06
+Epoch 84/100
+97/98 ━━━━━━━━━━━━━━━━━━━━ 0s 937ms/step - accuracy: 0.9919 - loss: 0.4115
+Epoch 84: val_accuracy improved from 0.92370 to 0.92660, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 977ms/step - accuracy: 0.9924 - loss: 0.4098 - val_accuracy: 0.9266 - val_loss: 0.7083 - learning_rate: 3.9063e-06
+Epoch 85/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 868ms/step - accuracy: 0.9931 - loss: 0.4087
+Epoch 85: val_accuracy did not improve from 0.92660
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 921ms/step - accuracy: 0.9932 - loss: 0.4083 - val_accuracy: 0.9262 - val_loss: 0.7145 - learning_rate: 3.9063e-06
+Epoch 86/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 906ms/step - accuracy: 0.9924 - loss: 0.4097
+Epoch 86: val_accuracy did not improve from 0.92660
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 960ms/step - accuracy: 0.9932 - loss: 0.4077 - val_accuracy: 0.9253 - val_loss: 0.7188 - learning_rate: 3.9063e-06
+Epoch 87/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 899ms/step - accuracy: 0.9928 - loss: 0.4076
+Epoch 87: val_accuracy improved from 0.92660 to 0.92710, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+
+Epoch 87: ReduceLROnPlateau reducing learning rate to 1.9531250927684596e-06.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 94s 960ms/step - accuracy: 0.9927 - loss: 0.4074 - val_accuracy: 0.9271 - val_loss: 0.7179 - learning_rate: 3.9063e-06
+Epoch 88/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 911ms/step - accuracy: 0.9924 - loss: 0.4072
+Epoch 88: val_accuracy improved from 0.92710 to 0.92780, saving model to /home/gomine/projects/custom-regularizer/checkpoints/group_l1_best.keras
+98/98 ━━━━━━━━━━━━━━━━━━━━ 98s 992ms/step - accuracy: 0.9929 - loss: 0.4068 - val_accuracy: 0.9278 - val_loss: 0.7110 - learning_rate: 1.9531e-06
+Epoch 89/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 901ms/step - accuracy: 0.9936 - loss: 0.4055
+Epoch 89: val_accuracy did not improve from 0.92780
+98/98 ━━━━━━━━━━━━━━━━━━━━ 91s 928ms/step - accuracy: 0.9930 - loss: 0.4058 - val_accuracy: 0.9265 - val_loss: 0.7263 - learning_rate: 1.9531e-06
+Epoch 90/100
+97/98 ━━━━━━━━━━━━━━━━━━━━ 0s 912ms/step - accuracy: 0.9932 - loss: 0.4049
+Epoch 90: val_accuracy did not improve from 0.92780
+98/98 ━━━━━━━━━━━━━━━━━━━━ 93s 944ms/step - accuracy: 0.9930 - loss: 0.4050 - val_accuracy: 0.9269 - val_loss: 0.7151 - learning_rate: 1.9531e-06
+Epoch 91/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 949ms/step - accuracy: 0.9932 - loss: 0.4051
+Epoch 91: val_accuracy did not improve from 0.92780
+98/98 ━━━━━━━━━━━━━━━━━━━━ 99s 1s/step - accuracy: 0.9934 - loss: 0.4046 - val_accuracy: 0.9265 - val_loss: 0.7152 - learning_rate: 1.9531e-06
+Epoch 92/100
+98/98 ━━━━━━━━━━━━━━━━━━━━ 0s 918ms/step - accuracy: 0.9930 - loss: 0.4046
+Epoch 92: val_accuracy did not improve from 0.92780
+
+Epoch 92: ReduceLROnPlateau reducing learning rate to 1e-06.
+98/98 ━━━━━━━━━━━━━━━━━━━━ 96s 975ms/step - accuracy: 0.9938 - loss: 0.4033 - val_accuracy: 0.9260 - val_loss: 0.7169 - learning_rate: 1.9531e-06
+Epoch 92: early stopping
+Restoring model weights from the end of the best epoch: 77.
+
+======================================================================
+EVALUATION PHASE
+======================================================================
+
+Evaluating Baseline...
+======================================================================
+Test Loss: 0.3204
+Test Accuracy: 0.9128
+
+======================================================================
+SPARSITY REPORT
+======================================================================
+
+conv2d:
+  Total groups: 64
+  Sparse groups: 0
+  Sparsity ratio: 0.00%
+
+dense:
+  Total groups: 10
+  Sparse groups: 0
+  Sparsity ratio: 0.00%
+
+----------------------------------------------------------------------
+OVERALL SPARSITY: 0.00%
+  (0/74 groups)
+======================================================================
+
+Total Parameters: 11,183,562
+
+Evaluating L1 Regularized...
+======================================================================
+Test Loss: 0.6364
+Test Accuracy: 0.9062
+
+======================================================================
+SPARSITY REPORT
+======================================================================
+
+conv2d_20:
+  Total groups: 64
+  Sparse groups: 0
+  Sparsity ratio: 0.00%
+
+dense_1:
+  Total groups: 10
+  Sparse groups: 0
+  Sparsity ratio: 0.00%
+
+----------------------------------------------------------------------
+OVERALL SPARSITY: 0.00%
+  (0/74 groups)
+======================================================================
+
+Total Parameters: 11,183,562
+
+Evaluating L2 Regularized...
+======================================================================
+Test Loss: 0.4963
+Test Accuracy: 0.9141
+
+======================================================================
+SPARSITY REPORT
+======================================================================
+
+conv2d_40:
+  Total groups: 64
+  Sparse groups: 0
+  Sparsity ratio: 0.00%
+
+dense_2:
+  Total groups: 10
+  Sparse groups: 0
+  Sparsity ratio: 0.00%
+
+----------------------------------------------------------------------
+OVERALL SPARSITY: 0.00%
+  (0/74 groups)
+======================================================================
+
+Total Parameters: 11,183,562
+
+Evaluating Group L1 Regularized...
+======================================================================
+Test Loss: 0.6996
+Test Accuracy: 0.9237
+
+======================================================================
+SPARSITY REPORT
+======================================================================
+
+conv2d_60:
+  Total groups: 64
+  Sparse groups: 5
+  Sparsity ratio: 7.81%
+
+dense_3:
+  Total groups: 10
+  Sparse groups: 0
+  Sparsity ratio: 0.00%
+
+----------------------------------------------------------------------
+OVERALL SPARSITY: 6.76%
+  (5/74 groups)
+======================================================================
+
+Total Parameters: 11,183,562
+
+Results saved to /home/gomine/projects/custom-regularizer/results/results.json
+
+
+
+Generating visualizations...
+Training curves saved to /home/gomine/projects/custom-regularizer/results/training_curves.png
+Weight distributions saved to /home/gomine/projects/custom-regularizer/results/weight_distributions.png
+
+======================================================================
+FINAL RESULTS SUMMARY
+======================================================================
+Model                     Accuracy     Sparsity     Params
+----------------------------------------------------------------------
+Baseline                  0.9128       0.00%        11,183,562
+L1 Regularized            0.9062       0.00%        11,183,562
+L2 Regularized            0.9141       0.00%        11,183,562
+Group L1 Regularized      0.9126       6.76%        11,183,562
+======================================================================

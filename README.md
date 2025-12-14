@@ -34,10 +34,10 @@ Unlike traditional L1/L2 regularization that promotes unstructured sparsity (ran
 git clone https://github.com/your-username/custom-regularizer.git
 cd custom-regularizer
 
-# Install dependencies with Poetry
+# Install dependencies with Poetry (recommended)
 poetry install
 
-# Or with pip (if you prefer)
+# Or with pip (alternative)
 pip install -e .
 ```
 
@@ -80,10 +80,17 @@ custom-regularizer/
 │       ├── GroupL1Regularizer.py    # Custom regularizer implementation
 │       ├── ResidualBlock.py         # ResNet residual block
 │       ├── ResNet18.py             # ResNet-18 architecture
-│       └── main.py                 # CIFAR-10 experiments
-├── tests/                          # Unit tests (empty for now)
+│       ├── main.py                 # CIFAR-10 experiments (train + log)
+│       ├── post-train.py           # Load checkpoints, evaluate, plot
+│       └── architecture.py         # Export architecture diagrams (2D/3D)
+├── tests/
+│   └── test_basic.py               # Basic unit tests
+├── example.py                      # Simple usage example
 ├── pyproject.toml                  # Project configuration
+├── poetry.lock                     # Poetry lock file
 ├── README.md                       # This file
+├── LICENSE                         # MIT License
+├── .gitignore                      # Git ignore rules
 ├── checkpoints/                    # Model checkpoints (created during training)
 ├── results/                        # Experiment results (created during training)
 └── logs/                          # TensorBoard logs (created during training)
@@ -131,13 +138,34 @@ build_resnet18(input_shape=(32, 32, 3), num_classes=10,
 
 **Returns:** Keras Model instance
 
+## 🧪 Testing
+
+The project includes comprehensive unit tests to ensure functionality:
+
+```bash
+# Run all tests
+poetry run pytest tests/
+
+# Run with verbose output
+poetry run pytest -v tests/
+
+# Run specific test
+poetry run python tests/test_basic.py
+```
+
+Tests cover:
+- **GroupL1Regularizer**: Basic functionality and regularization calculations
+- **ResidualBlock**: Layer construction and forward pass
+- **ResNet-18**: Model building and architecture validation
+- **Regularized Models**: Integration of regularizers with model layers
+
 ## 🧪 Running Experiments
 
 The project includes comprehensive experiments comparing different regularization techniques on CIFAR-10:
 
 ```bash
 # Run the full experiment suite
-python -m custom_regularizer.main
+poetry run python -m custom_regularizer.main
 ```
 
 This will train 4 models and generate:
@@ -146,10 +174,19 @@ This will train 4 models and generate:
 - **L2 Regularized** (traditional L2)
 - **Group L1 Regularized** (structured sparsity)
 
+### Simple Example
+
+For a quick demonstration without full training:
+
+```bash
+# Run the simple example
+poetry run python example.py
+```
+
 ### Generated Outputs
 
 - **Model checkpoints** in `checkpoints/`
-- **Training curves** and **sparsity plots** in `results/`
+- **Training curves**, **sparsity plots**, and **architecture diagrams** in `results/`
 - **TensorBoard logs** in `logs/`
 - **Performance metrics** in `results/results.json`
 
@@ -181,6 +218,7 @@ The project includes comprehensive visualization tools:
 - **Weight distributions**: Group norm histograms
 - **Confusion matrices**: Per-class performance
 - **Performance summaries**: Accuracy vs sparsity trade-offs
+- **Architecture diagrams**: 2D/3D renders and per-block internals
 
 ## 🔍 Technical Details
 
@@ -213,8 +251,8 @@ Where:
 # Install in development mode
 poetry install
 
-# Run tests (when implemented)
-poetry run pytest
+# Run tests
+poetry run pytest tests/
 
 # Format code
 poetry run black src/
@@ -222,6 +260,19 @@ poetry run isort src/
 
 # Type checking
 poetry run mypy src/
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+poetry run pytest
+
+# Run specific test file
+poetry run python tests/test_basic.py
+
+# Run with coverage
+poetry run pytest --cov=custom_regularizer
 ```
 
 ### Adding New Regularizers
@@ -237,6 +288,21 @@ class MyRegularizer(keras.regularizers.Regularizer):
         return regularization_loss
 ```
 
+## 🖼️ Visualization & Post-Train Utilities
+
+- **Architecture exports** (results/baseline_architecture_color.png, baseline_architecture_schematic.png, baseline_architecture_3d.png, baseline_architecture_block_sample.png):
+
+```bash
+poetry run python src/custom_regularizer/architecture.py
+```
+
+- **Post-train evaluation and plots** (confusion matrices, sparsity comparison, weight distributions, performance summary, classification reports; outputs in `results/`):
+
+```bash
+poetry run python src/custom_regularizer/post-train.py
+```
+Requires trained checkpoints in `checkpoints/` (e.g., baseline_best.keras, l1_reg_best.keras, l2_reg_best.keras, group_l1_best.keras).
+
 ## 📚 Dependencies
 
 - **tensorflow[and-cuda] >= 2.20.0**: Deep learning framework
@@ -245,6 +311,9 @@ class MyRegularizer(keras.regularizers.Regularizer):
 - **matplotlib >= 3.10.7**: Plotting
 - **seaborn >= 0.13.2**: Statistical visualization
 - **scikit-learn >= 1.7.2**: Machine learning utilities
+- **black >= 25.12.0**: Code formatting
+- **isort >= 7.0.0**: Import sorting
+- **mypy >= 1.19.0**: Type checking
 
 ## 🤝 Contributing
 

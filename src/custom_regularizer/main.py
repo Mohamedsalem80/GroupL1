@@ -13,10 +13,18 @@ from tensorflow import keras
 from tensorflow.keras import layers, models, optimizers
 from tensorflow.keras.callbacks import (EarlyStopping, ModelCheckpoint,
                                         ReduceLROnPlateau, TensorBoard)
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras import mixed_precision
 
 from .GroupL1Regularizer import GroupL1Regularizer
 from .ResNet18 import build_resnet18
+
+# Set environment variables for reproducibility
+os.environ['TF_DETERMINISTIC_OPS'] = '1'
+os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
+os.environ['PYTHONHASHSEED'] = '0'
+
+# Set global policy for mixed precision
+mixed_precision.set_global_policy("mixed_float16")
 
 # Main Paths
 ROOT = os.getcwd()
@@ -150,32 +158,33 @@ def load_and_preprocess_cifar10():
     return (x_train, y_train), (x_test, y_test)
 
 
-def create_data_generators(x_train, y_train, batch_size=128):
-    """
-    Create data generators with augmentation for training.
-
-    Args:
-        x_train: Training images
-        y_train: Training labels
-        batch_size: Batch size
-
-    Returns:
-        Training data generator
-    """
-    # Data augmentation
-    train_datagen = ImageDataGenerator(
-        rotation_range=15,
-        width_shift_range=0.1,
-        height_shift_range=0.1,
-        horizontal_flip=True,
-        fill_mode="nearest",
+def create_train_dataset(x_train, y_train, batch_size=128):
+    """Build a tf.data pipeline with light augmentation and prefetch."""
+    augmenter = keras.Sequential(
+        [
+            layers.RandomFlip("horizontal"),
+            layers.RandomTranslation(0.1, 0.1),
+            layers.RandomRotation(0.04),
+        ]
     )
 
-    train_generator = train_datagen.flow(
-        x_train, y_train, batch_size=batch_size, shuffle=True
+    ds = tf.data.Dataset.from_tensor_slices((x_train, y_train))
+    ds = ds.shuffle(buffer_size=20000, seed=42, reshuffle_each_iteration=True)
+    ds = ds.map(
+        lambda img, label: (augmenter(img, training=True), label),
+        num_parallel_calls=tf.data.AUTOTUNE,
     )
+    ds = ds.batch(batch_size)
+    ds = ds.prefetch(tf.data.AUTOTUNE)
+    return ds
 
-    return train_generator
+
+def create_eval_dataset(x, y, batch_size=128):
+    """Evaluation pipeline without augmentation."""
+    ds = tf.data.Dataset.from_tensor_slices((x, y))
+    ds = ds.batch(batch_size)
+    ds = ds.prefetch(tf.data.AUTOTUNE)
+    return ds
 
 
 # Training Functions
@@ -211,8 +220,9 @@ def train_model(
         metrics=["accuracy"],
     )
 
-    # Create data generator
-    train_generator = create_data_generators(x_train, y_train, batch_size)
+    # Build datasets
+    train_ds = create_train_dataset(x_train, y_train, batch_size)
+    val_ds = create_eval_dataset(x_test, y_test, batch_size)
 
     # Callbacks
     callbacks = [
@@ -236,10 +246,9 @@ def train_model(
     print("=" * 70)
 
     history = model.fit(
-        train_generator,
-        steps_per_epoch=len(x_train) // batch_size,
+        train_ds,
         epochs=epochs,
-        validation_data=(x_test, y_test),
+        validation_data=val_ds,
         callbacks=callbacks,
         verbose=1,
     )
@@ -278,10 +287,14 @@ def train_model_with_tensorboard(
         metrics=["accuracy"],
     )
 
-    # Create data generator
-    train_generator = create_data_generators(x_train, y_train, batch_size)
+    # Build datasets
+    train_ds = create_train_dataset(x_train, y_train, batch_size)
+    val_ds = create_eval_dataset(x_test, y_test, batch_size)
 
     # Callbacks
+    tb_callback = create_tensorboard_callback(model_name, logs_dir)
+    weight_logger = WeightHistogramLogger(tb_callback.log_dir)
+    # image_logger = SampleImageLogger(tb_callback.log_dir, x_train[:8])
     callbacks = [
         ModelCheckpoint(
             f"{checkpoint_dir}/{model_name}_best.keras",
@@ -296,7 +309,9 @@ def train_model_with_tensorboard(
         ReduceLROnPlateau(
             monitor="val_loss", factor=0.5, patience=5, min_lr=1e-6, verbose=1
         ),
-        create_tensorboard_callback(model_name, logs_dir),
+        tb_callback,
+        weight_logger,
+        # image_logger,
     ]
 
     # Train
@@ -304,10 +319,9 @@ def train_model_with_tensorboard(
     print("=" * 70)
 
     history = model.fit(
-        train_generator,
-        steps_per_epoch=len(x_train) // batch_size,
+        train_ds,
         epochs=epochs,
-        validation_data=(x_test, y_test),
+        validation_data=val_ds,
         callbacks=callbacks,
         verbose=1,
     )
@@ -469,11 +483,48 @@ def create_tensorboard_callback(model_name, log_dir=logs_dir):
         write_images=True,
         update_freq="epoch",
         profile_batch="10,20",  # Profile batches 10-20
-        embeddings_freq=1,
+        embeddings_freq=0,  # Disable embeddings logging (no embedding layers)
     )
 
     print(f"TensorBoard logs will be saved to: {log_path}")
     return tensorboard_callback
+
+
+class WeightHistogramLogger(tf.keras.callbacks.Callback):
+    """Log per-layer weight histograms with explicit tags."""
+
+    def __init__(self, log_dir):
+        super().__init__()
+        self.writer = tf.summary.create_file_writer(
+            os.path.join(log_dir, "weights_manual")
+        )
+
+    def on_epoch_end(self, epoch, logs=None):
+        with self.writer.as_default():
+            for layer in self.model.layers:
+                for weight in layer.weights:
+                    tag = f"{layer.name}/{weight.name.replace(':', '_')}"
+                    tf.summary.histogram(tag, weight, step=epoch)
+            self.writer.flush()
+
+
+class SampleImageLogger(tf.keras.callbacks.Callback):
+    """Log a fixed batch of training images for TensorBoard images tab."""
+
+    def __init__(self, log_dir, sample_images):
+        super().__init__()
+        self.images = tf.convert_to_tensor(sample_images, dtype=tf.float32)
+        self.writer = tf.summary.create_file_writer(os.path.join(log_dir, "images_manual"))
+
+    def on_epoch_end(self, epoch, logs=None):
+        with self.writer.as_default():
+            tf.summary.image(
+                "train_samples",
+                self.images,
+                step=epoch,
+                max_outputs=tf.shape(self.images)[0],
+            )
+            self.writer.flush()
 
 
 # Visualization Functions
@@ -563,29 +614,21 @@ def plot_sparsity_comparison(models, model_names, save_dir=results_dir):
                 )
 
     df = pd.DataFrame(sparsity_data)
+    if df.empty:
+        print("No sparsity data to plot.")
+        return
 
-    # Create grouped bar plot
-    fig, ax = plt.subplots(figsize=(16, 8))
+    # Align layers across models via pivot to avoid shape mismatches
+    pivot = df.pivot(index="Layer", columns="Model", values="Sparsity").fillna(0)
 
-    # Get unique layers and models
-    layers = df["Layer"].unique()
-    x = np.arange(len(layers))
-    width = 0.2
-
-    for i, name in enumerate(model_names):
-        model_data = df[df["Model"] == name]
-        offsets = width * (i - len(model_names) / 2 + 0.5)
-        ax.bar(x + offsets, model_data["Sparsity"], width, label=name)
-
+    ax = pivot.plot(kind="bar", figsize=(16, 8))
     ax.set_xlabel("Layer", fontsize=12)
     ax.set_ylabel("Sparsity Ratio", fontsize=12)
     ax.set_title("Layer-wise Sparsity Comparison", fontsize=14, fontweight="bold")
-    ax.set_xticks(x)
-    ax.set_xticklabels(layers, rotation=45, ha="right")
-    ax.legend(loc="best", fontsize=10)
+    ax.tick_params(axis="x", rotation=45)
     ax.grid(True, alpha=0.3, axis="y")
-
     plt.tight_layout()
+
     plt.savefig(
         os.path.join(save_dir, "sparsity_comparison.png"), dpi=300, bbox_inches="tight"
     )
@@ -865,7 +908,7 @@ print("\nLoading CIFAR-10 dataset...")
 
 # Training parameters
 EPOCHS = 100
-BATCH_SIZE = 128
+BATCH_SIZE = 512 # Increased batch size for faster training
 
 
 # Build models with different regularizations
@@ -965,6 +1008,9 @@ history_group = train_model_with_tensorboard(
 )
 histories.append(history_group)
 
+# Save training histories
+with open(os.path.join(results_dir, "all_histories.json"), "w") as f:
+    json.dump(histories, f, indent=2)
 
 # Evaluate models
 print("\n" + "=" * 70)
